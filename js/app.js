@@ -89,13 +89,23 @@ const CTF = {
     setTimeout(() => { cancelAnimationFrame(frame); canvas.remove(); }, 5000);
   },
 
+  /* ─── Flag Security ─── */
+  async hashFlag(flag) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(flag.trim());
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hash))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  },
+
   /* ─── On-Page Submission ─── */
-  initSubmission(challengeId, expectedFlag) {
+  initSubmission(challengeId, expectedHash) {
     const area = document.getElementById('submission-area');
     if (!area) return;
 
     if (this.isSolved(challengeId)) {
-      showSolvedBanner('submission-area', challengeId, expectedFlag);
+      showSolvedBanner('submission-area', challengeId, '******');
       return;
     }
 
@@ -113,9 +123,12 @@ const CTF = {
     const btn = document.getElementById('flag-submit');
     const msg = document.getElementById('submission-msg');
 
-    const doSubmit = () => {
+    const doSubmit = async () => {
       const val = input.value.trim();
-      if (val === expectedFlag) {
+      if (!val) return;
+      
+      const hashed = await this.hashFlag(val);
+      if (hashed === expectedHash) {
         this.markSolved(challengeId, val);
         showSolvedBanner('submission-area', challengeId, val);
       } else {
