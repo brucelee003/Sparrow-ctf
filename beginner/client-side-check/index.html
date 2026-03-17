@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client-Side Check — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Beginner</a></li>
+                <li><a href="../../intermediate/index.html">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Beginner</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Client-Side Check</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-beginner">🟢 Beginner</span>
+                <span class="badge badge-purple">50 pts</span>
+                <span class="badge badge-info">Client-Side Bypass</span>
+            </div>
+            <h1 class="challenge-title">🔍 Client-Side <span>Check</span></h1>
+            <p class="challenge-subtitle">B-08 &nbsp;·&nbsp; /beginner/client-side-check</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's internal tools page is "protected" by a password prompt. The developer, in a hurry,
+                implemented the check entirely in JavaScript — with the correct password hardcoded directly
+                in the script file. The server never verifies anything. Open DevTools → Sources (or navigate
+                directly to <code>app.js</code>) and find the password before entering it.
+            </p>
+        </div>
+
+        <div class="endpoints-section">
+            <div class="section-label">// Files</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>app.js</code></td>
+                            <td>JavaScript file loaded by this page — contains the hardcoded password</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Password gate -->
+        <div id="gate-panel">
+            <div class="vuln-area">
+                <div class="vuln-area-header">
+                    <span class="vuln-area-title">🔒 Internal Tools — Password Required</span>
+                </div>
+                <div class="vuln-area-body">
+                    <div style="max-width:320px;margin:0 auto;text-align:center;">
+                        <div style="font-size:2.5rem;margin-bottom:12px;">🔒</div>
+                        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">
+                            This page is password-protected. Enter the secret password to access Internal Tools.
+                        </p>
+                        <div class="form-group mb-16">
+                            <input type="password" class="form-input" id="gate-pass" placeholder="Enter password..."
+                                autocomplete="off" />
+                        </div>
+                        <button class="btn btn-primary" style="width:100%;" onclick="checkPassword()">Unlock →</button>
+                        <div id="gate-error" style="margin-top:12px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Unlocked content -->
+        <div id="unlocked-panel" style="display:none;">
+            <div class="vuln-area">
+                <div class="vuln-area-header">
+                    <span class="vuln-area-title" style="color:var(--green);">✓ Unlocked — Internal Tools</span>
+                </div>
+                <div class="vuln-area-body">
+                    <div class="flag-section">
+                        <div class="flag-section-header">🚩 Internal Tools Access Token</div>
+                        <div class="flag-section-body">
+                            <p style="color:var(--text-muted);font-size:0.85rem;">
+                                You found the hardcoded password in app.js and unlocked the internal tools portal.
+                                Never store secrets in client-side code!
+                            </p>
+                            <div class="flag-reveal">🚩 FLAG{js_hardcoded_password}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Open DevTools → <strong>Sources</strong> tab → find <code>app.js</code>. Or navigate directly to
+            <code>app.js</code> in your browser.
+            Look for a variable that holds the expected password value.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Back to Beginner</a> &nbsp;·&nbsp;
+            <a href="../../intermediate/index.html">Next: Intermediate →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script src="app.js"></script>
+    <script>
+        CTF.initSubmission('b08', 'FLAG{js_hardcoded_password}');
+
+        function checkPassword() {
+            const pass = document.getElementById('gate-pass').value;
+            if (pass === INTERNAL_TOOLS_PASSWORD) {
+                document.getElementById('gate-panel').style.display = 'none';
+                document.getElementById('unlocked-panel').style.display = 'block';
+
+                // Discovery hint
+                if (!CTF.isSolved('b08')) {
+                    const area = document.getElementById('submission-area');
+                    const hintDiv = document.createElement('div');
+                    hintDiv.className = 'animate-in';
+                    hintDiv.style.marginTop = '20px';
+                    hintDiv.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> SECURITY BYPASSED. Use the access token below to submit for points.</div>';
+                    area.insertAdjacentElement('beforebegin', hintDiv);
+                }
+            } else {
+                document.getElementById('gate-error').innerHTML =
+                    '<div class="alert alert-danger">Wrong password. Try reading the source files.</div>';
+            }
+        }
+        document.getElementById('gate-pass').addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword(); });
+
+        if (CTF.isSolved('b08')) {
+            document.getElementById('unlocked-panel').style.display = 'block';
+            document.getElementById('gate-panel').style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>

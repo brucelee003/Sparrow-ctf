@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scoreboard — WebPWN CTF</title>
+    <link rel="stylesheet" href="../styles/main.css" />
+    <style>
+        .sb-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .sb-stat {
+            background: rgba(10, 12, 16, 0.6);
+            border: 1px solid var(--border);
+            padding: 32px 24px;
+            text-align: left;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+        }
+
+        .sb-stat-val {
+            font-family: var(--font-mono);
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--cyan);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .sb-stat-lbl {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .score-bar-wrap {
+            margin-top: 16px;
+            height: 4px;
+            background: var(--charcoal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .score-bar {
+            height: 100%;
+            background: var(--cyan);
+            box-shadow: 0 0 10px var(--cyan);
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .challenge-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--charcoal);
+        }
+
+        .challenge-row:last-child {
+            border-bottom: none;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            flex-shrink: 0;
+        }
+
+        .status-dot.solved {
+            background: var(--cyan);
+            box-shadow: var(--cyan-glow);
+        }
+
+        .status-dot.unsolved {
+            background: var(--text-muted);
+            opacity: 0.2;
+        }
+
+        .ch-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            flex: 1;
+            font-family: var(--font-mono);
+            letter-spacing: 0.02em;
+        }
+
+        .ch-pts {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .ch-time {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        @media (max-width: 900px) {
+            .sb-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../beginner/index.html">Beginner</a></li>
+                <li><a href="../intermediate/index.html">Intermediate</a></li>
+                <li><a href="../advanced/index.html">Advanced</a></li>
+                <li><a href="index.html" class="active">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section style="padding:80px 0 48px;border-bottom:2px solid var(--charcoal);">
+        <div class="container">
+            <span class="section-eyebrow">SYSTEM_LOGS // SCOREBOARD</span>
+            <h1 style="font-size:2.5rem;font-weight:700;letter-spacing:0.1em;margin-top:12px;">SCOREBOARD</h1>
+            <p style="color:var(--text-secondary);margin-top:12px;font-family:var(--font-mono);font-size:0.9rem;">
+                Tracking node compromises and data credit extraction.
+            </p>
+        </div>
+    </section>
+
+    <div class="container" style="padding-top:48px;">
+
+        <div class="sb-grid">
+            <div class="sb-stat">
+                <div class="sb-stat-val" id="total-score">0</div>
+                <div class="sb-stat-lbl">Total Points</div>
+                <div class="score-bar-wrap" style="margin-top:12px;">
+                    <div class="score-bar" id="score-bar" style="width:0%"></div>
+                </div>
+            </div>
+            <div class="sb-stat">
+                <div class="sb-stat-val" id="total-solved">0</div>
+                <div class="sb-stat-lbl">Challenges Solved</div>
+            </div>
+            <div class="sb-stat">
+                <div class="sb-stat-val" id="completion-pct">0%</div>
+                <div class="sb-stat-lbl">Completion</div>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px;" id="level-progress">
+
+            <!-- Beginner -->
+            <div class="card" style="padding:32px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                    <span class="badge badge-info" style="border-radius:0;">TIER_01: BEGINNER</span>
+                    <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);" id="b-score">0
+                        / 400</span>
+                </div>
+                <div id="b-list"></div>
+            </div>
+
+            <!-- Intermediate -->
+            <div class="card" style="padding:32px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                    <span class="badge badge-intermediate" style="border-radius:0;">TIER_02: INTERMEDIATE</span>
+                    <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);" id="i-score">0
+                        / 1200</span>
+                </div>
+                <div id="i-list" style="border-top:1px solid var(--charcoal);padding-top:8px;"></div>
+            </div>
+
+            <!-- Advanced -->
+            <div class="card" style="padding:32px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                    <span class="badge badge-advanced" style="border-radius:0;">TIER_03: ADVANCED</span>
+                    <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);" id="a-score">0
+                        / 2400</span>
+                </div>
+                <div id="a-list" style="border-top:1px solid var(--charcoal);padding-top:8px;"></div>
+            </div>
+
+        </div>
+
+        <div style="margin-top:32px;text-align:center;">
+            <button class="btn btn-ghost btn-sm"
+                onclick="if(confirm('Reset all progress?')){localStorage.removeItem('webpwn_solved');if(window.syncToFirebase)window.syncToFirebase();location.reload();}">
+                🗑️ Reset Progress
+            </button>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="container">
+            <span class="footer-logo">WebPWN.ctf</span> — Scoreboard &nbsp;·&nbsp;
+            <a href="../index.html">Home</a> &nbsp;·&nbsp;
+            <a href="../beginner/index.html">Start Challenges</a> &nbsp;·&nbsp;
+            <a href="../admin/index.html" style="color:var(--text-muted); opacity:0.5;">[ ADMIN_TERMINAL ]</a>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        const CHALLENGES = [
+            { id: 'b01', name: 'Robots Spy', pts: 50, level: 'b', link: '../beginner/robots-spy/index.html' },
+            { id: 'b02', name: 'Hidden Comment', pts: 50, level: 'b', link: '../beginner/hidden-comment/index.html' },
+            { id: 'b03', name: 'Easy Backup', pts: 50, level: 'b', link: '../beginner/easy-backup/index.html' },
+            { id: 'b04', name: 'ID in URL', pts: 50, level: 'b', link: '../beginner/id-in-url/index.html' },
+            { id: 'b05', name: 'Default Login', pts: 50, level: 'b', link: '../beginner/default-login/index.html' },
+            { id: 'b06', name: 'Weak Search XSS', pts: 50, level: 'b', link: '../beginner/weak-search-xss/index.html' },
+            { id: 'b07', name: 'Unprotected Directory', pts: 50, level: 'b', link: '../beginner/open-directory/index.html' },
+            { id: 'b08', name: 'Client-Side Check', pts: 50, level: 'b', link: '../beginner/client-side-check/index.html' },
+            { id: 'i01', name: 'Union Login', pts: 150, level: 'i', link: '../intermediate/union-login/index.html' },
+            { id: 'i02', name: 'Stored XSS Comment', pts: 150, level: 'i', link: '../intermediate/stored-xss-comment/index.html' },
+            { id: 'i03', name: 'Cookie Tampering', pts: 150, level: 'i', link: '../intermediate/cookie-tampering/index.html' },
+            { id: 'i04', name: 'Insecure Reset Link', pts: 150, level: 'i', link: '../intermediate/insecure-reset/index.html' },
+            { id: 'i05', name: 'CSRF Form', pts: 150, level: 'i', link: '../intermediate/csrf-form/index.html' },
+            { id: 'i06', name: 'JWT Weak Secret', pts: 150, level: 'i', link: '../intermediate/jwt-weak/index.html' },
+            { id: 'i07', name: 'Open Redirect', pts: 150, level: 'i', link: '../intermediate/open-redirect/index.html' },
+            { id: 'i08', name: 'Path Traversal Lite', pts: 150, level: 'i', link: '../intermediate/path-traversal-lite/index.html' },
+            { id: 'a01', name: 'SSRF Probe', pts: 300, level: 'a', link: '../advanced/ssrf-probe/index.html' },
+            { id: 'a02', name: 'Blind SQLi', pts: 300, level: 'a', link: '../advanced/blind-sqli/index.html' },
+            { id: 'a03', name: 'XXE Reader', pts: 300, level: 'a', link: '../advanced/xxe-reader/index.html' },
+            { id: 'a04', name: 'Prototype Pollution', pts: 300, level: 'a', link: '../advanced/prototype-pollution/index.html' },
+            { id: 'a05', name: 'Race Coupon', pts: 300, level: 'a', link: '../advanced/race-coupon/index.html' },
+            { id: 'a06', name: 'Cache Poison', pts: 300, level: 'a', link: '../advanced/cache-poison/index.html' },
+            { id: 'a07', name: 'Deserialization Attack', pts: 300, level: 'a', link: '../advanced/deserialization/index.html' },
+            { id: 'a08', name: 'SSTI Template', pts: 300, level: 'a', link: '../advanced/ssti-template/index.html' },
+        ];
+
+        window.renderScoreboard = function() {
+            const solved = CTF.getSolved();
+            let totalPts = 0, totalSolved = 0;
+            const bPts = { b: 0, i: 0, a: 0 }, bSolved = { b: 0, i: 0, a: 0 };
+
+            document.getElementById('b-list').innerHTML = '';
+            document.getElementById('i-list').innerHTML = '';
+            document.getElementById('a-list').innerHTML = '';
+
+            CHALLENGES.forEach(ch => {
+                const isSolved = !!solved[ch.id];
+                if (isSolved) { totalPts += ch.pts; totalSolved++; bPts[ch.level] += ch.pts; bSolved[ch.level]++; }
+
+                const listEl = document.getElementById(ch.level + '-list');
+                const solvedInfo = solved[ch.id];
+                const timeStr = solvedInfo ? new Date(solvedInfo.solvedAt).toLocaleDateString() : '';
+                listEl.innerHTML += `
+        <div class="challenge-row">
+          <div class="status-dot ${isSolved ? 'solved' : 'unsolved'}"></div>
+          <a href="${ch.link}" class="ch-name" style="color:${isSolved ? 'var(--cyan)' : 'var(--text-secondary)'};text-decoration:none;">${ch.name}</a>
+          <span class="ch-pts">${ch.pts}</span>
+          ${isSolved ? `<span class="ch-time">${timeStr}</span>` : '<span class="ch-time" style="color:var(--text-muted)">--</span>'}
+        </div>`;
+            });
+
+            document.getElementById('total-score').textContent = totalPts;
+            document.getElementById('total-solved').textContent = totalSolved;
+            document.getElementById('completion-pct').textContent = Math.round(totalSolved / 24 * 100) + '%';
+            document.getElementById('score-bar').style.width = Math.round(totalPts / 4000 * 100) + '%';
+            document.getElementById('b-score').textContent = bPts.b + ' / 400 pts';
+            document.getElementById('i-score').textContent = bPts.i + ' / 1200 pts';
+            document.getElementById('a-score').textContent = bPts.a + ' / 2400 pts';
+        };
+        window.renderScoreboard();
+    </script>
+</body>
+
+</html>

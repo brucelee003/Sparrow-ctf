@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebPWN CTF — Web Penetration Testing Challenge</title>
+    <meta name="description"
+        content="A browser-only CTF platform focused on modern web penetration testing. 24 challenges across Beginner, Intermediate, and Advanced levels." />
+    <link rel="stylesheet" href="styles/main.css" />
+    <style>
+        /* ── Hero ── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 100px 0;
+            background: radial-gradient(circle at 70% 50%, rgba(79, 209, 197, 0.08) 0%, transparent 60%);
+        }
+
+        .hero-layout {
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            /* Fixed width for HUD side to stop jitter */
+            align-items: flex-start;
+            /* Stop vertical centering shifts */
+            gap: 60px;
+            padding-top: 50px;
+            /* Manual vertical offset for stability */
+        }
+
+        .hero-content {
+            text-align: left;
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 650px;
+            /* Lock content width */
+        }
+
+        /* Radial HUD Element - Positioned behind hacker */
+        .hud-visual {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            margin-top: -40px;
+            /* Offset to align with title area */
+        }
+
+        /* Hero Asset Image */
+        .hero-asset-img {
+            max-width: 100%;
+            height: auto;
+            filter: drop-shadow(0 0 30px rgba(79, 209, 197, 0.15));
+            mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+            animation: fadeInUp 1.2s ease-out;
+            z-index: 2;
+        }
+
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--charcoal);
+            border-left: 3px solid var(--cyan);
+            padding: 8px 20px;
+            margin-bottom: 32px;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--cyan);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 6vw, 4.2rem);
+            font-weight: 700;
+            line-height: 1.05;
+            /* Extra tight line-height to prevent wrap-expansion */
+            letter-spacing: 0.15em;
+            margin-bottom: 32px;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            min-height: 105px;
+            /* Fixed height based on clamp result to prevent shift */
+            display: block;
+            overflow: visible;
+        }
+
+        .hero-title span {
+            color: var(--cyan);
+            text-shadow: 0 0 20px rgba(79, 209, 197, 0.4);
+        }
+
+        .hero-description {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            max-width: 580px;
+            line-height: 1.8;
+            font-family: var(--font-mono);
+            margin-bottom: 48px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 20px;
+        }
+
+        /* Technical Stats Readout - Grid below Hero Content */
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-top: 60px;
+            border-top: 1px solid var(--charcoal);
+            padding-top: 40px;
+        }
+
+        .stat-module {
+            text-align: left;
+            border-left: 2px solid var(--charcoal);
+            padding-left: 20px;
+            transition: var(--trans);
+        }
+
+        .stat-module:hover {
+            border-left-color: var(--cyan);
+        }
+
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--cyan);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+
+        .stat-bar {
+            height: 2px;
+            background: var(--charcoal);
+            margin-top: 12px;
+            position: relative;
+            width: 100%;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            background: var(--cyan);
+            box-shadow: var(--cyan-glow);
+        }
+
+        /* ── Levels Section ── */
+        .levels-section {
+            padding: 120px 0;
+            background: linear-gradient(to bottom, transparent, rgba(10, 12, 16, 0.4), transparent);
+            border-top: 1px solid var(--charcoal);
+        }
+
+        .levels-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            margin-top: 80px;
+        }
+
+        .level-card {
+            background: rgba(10, 12, 16, 0.3);
+            border: 1px solid var(--border);
+            padding: 50px 35px;
+            transition: var(--trans);
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%);
+            height: 100%;
+            position: relative;
+        }
+
+        .level-card::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 15px;
+            height: 1px;
+            background: var(--cyan);
+            opacity: 0.3;
+        }
+
+        .level-card:hover {
+            border-color: var(--cyan);
+            background: rgba(10, 12, 16, 0.8);
+            transform: translateY(-8px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .level-card:hover .level-title {
+            color: var(--cyan);
+        }
+
+        .level-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            transition: var(--trans);
+        }
+
+        .level-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.8;
+            font-family: var(--font-mono);
+            flex-grow: 1;
+        }
+
+        /* ── Section header ── */
+        .section-header {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .section-eyebrow {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5em;
+            color: var(--cyan);
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .section-title {
+            font-size: 2.8rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+        }
+
+        /* Horizontal HUD Divider */
+        .hud-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--charcoal) 20%, var(--charcoal) 80%, transparent);
+            margin: 40px 0;
+            position: relative;
+        }
+
+        .hud-divider::after {
+            content: 'SEC_LEVEL_01';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-primary);
+            padding: 0 15px;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            letter-spacing: 2px;
+        }
+
+        @media (max-width: 1024px) {
+            .hero-layout {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .hero-description {
+                margin: 0 auto 40px;
+            }
+
+            .hero-stats {
+                grid-template-columns: repeat(2, 1fr);
+                max-width: 600px;
+            }
+
+            .hud-visual {
+                display: none;
+            }
+
+            .levels-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── Navigation ── -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="beginner/index.html">Beginner</a></li>
+                <li><a href="intermediate/index.html">Intermediate</a></li>
+                <li><a href="advanced/index.html">Advanced</a></li>
+                <li><a href="scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- ── Hero ── -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-layout">
+                <div class="hero-content">
+                    <div class="hero-tag">System.Status: Active // AUTH_BYPASS_ENABLED</div>
+                    <h1 class="hero-title">
+                        BREACH THE<br><span>NETWORK.</span>
+                    </h1>
+                    <p class="hero-description">
+                        NovaCorp's edge infrastructure is leaking data. Identify the vectors,
+                        exploit the vulnerabilities, and secure the flags. This is not a drill.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="beginner/index.html" class="btn btn-primary btn-lg">NODE_ENTRY.EXE</a>
+                        <a href="scoreboard/index.html" class="btn btn-ghost btn-lg">SYSTEM_LOGS.LOG</a>
+                    </div>
+
+                    <div class="hero-stats">
+                        <div class="stat-module">
+                            <span class="stat-value">24</span>
+                            <span class="stat-label">VULN_CHANNELS</span>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill" style="width:100%"></div>
+                            </div>
+                        </div>
+                        <div class="stat-module" id="hero-stat-compro">
+                            <span class="stat-value" id="hero-solved-count">0</span>
+                            <span class="stat-label">NODES_COMPROMISED</span>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill" id="hero-solved-bar" style="width:0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hud-visual">
+                    <img src="assets/img/hacker_hero.jpg" alt="Operator Profile" class="hero-asset-img">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Story ── -->
+    <section>
+        <div class="container-sm">
+            <div class="story-panel">
+                <div class="section-eyebrow">// Background Story</div>
+                <h2 style="font-size:1.6rem;margin-top:8px;">The NovaCorp Incident</h2>
+                <blockquote class="story-quote">
+                    "NovaCorp, a mid-size SaaS startup, has just pushed their new web platform to production —
+                    untested, under-reviewed, and alarmingly confident. You're a freelance security researcher
+                    who's been hired (retroactively) to find everything wrong. Prove what's broken before
+                    the real attackers do."
+                </blockquote>
+                <p style="color:var(--text-muted);font-size:0.9rem;">
+                    Each challenge is a realistic vulnerability scenario drawn from real-world pentesting engagements.
+                    No VPN required. No external tools beyond your browser. Everything you need lives in DevTools —
+                    or optionally Burp Suite.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Levels ── -->
+    <div class="hud-divider"></div>
+
+    <section class="levels-section">
+        <div class="container">
+            <div class="section-header" style="text-align:center;">
+                <span class="section-eyebrow">Level_Selection</span>
+                <h2 class="section-title">CHOOSE_ENTRY_NODE</h2>
+            </div>
+            <div class="levels-grid">
+
+                <!-- Beginner -->
+                <a href="beginner/index.html" style="text-decoration:none;">
+                    <div class="level-card">
+                        <span class="section-eyebrow">Tier_01</span>
+                        <h3 class="level-title">BEGINNER</h3>
+                        <p class="level-desc">Fundamental reconnaissance. Source inspection, hidden assets, and basic
+                            IDOR patterns.</p>
+                        <div style="margin-top:auto;">
+                            <span class="badge badge-info" style="border-radius:0;">8_CHALLENGES</span>
+                            <span class="badge badge-info" style="border-radius:0;">50_PTS_EA</span>
+                        </div>
+                        <div class="btn btn-outline btn-sm" style="width:100%;justify-content:center;">SYNC_NODE</div>
+                    </div>
+                </a>
+
+                <!-- Intermediate -->
+                <a href="intermediate/index.html" style="text-decoration:none;">
+                    <div class="level-card">
+                        <span class="section-eyebrow">Tier_02</span>
+                        <h3 class="level-title">INTERMEDIATE</h3>
+                        <p class="level-desc">Injection vectors, session hijacking, and server-side manipulation.
+                            Requires tool usage.</p>
+                        <div style="margin-top:auto;">
+                            <span class="badge badge-intermediate" style="border-radius:0;">8_CHALLENGES</span>
+                            <span class="badge badge-intermediate" style="border-radius:0;">150_PTS_EA</span>
+                        </div>
+                        <div class="btn btn-outline btn-sm"
+                            style="width:100%;justify-content:center;border-color:var(--yellow);color:var(--yellow);">
+                            SYNC_NODE</div>
+                    </div>
+                </a>
+
+                <!-- Advanced -->
+                <a href="advanced/index.html" style="text-decoration:none;">
+                    <div class="level-card">
+                        <span class="section-eyebrow">Tier_03</span>
+                        <h3 class="level-title">ADVANCED</h3>
+                        <p class="level-desc">Complex exploit chains, prototype pollution, and advanced cryptographic
+                            bypasses.</p>
+                        <div style="margin-top:auto;">
+                            <span class="badge badge-advanced" style="border-radius:0;">8_CHALLENGES</span>
+                            <span class="badge badge-advanced" style="border-radius:0;">300_PTS_EA</span>
+                        </div>
+                        <div class="btn btn-outline btn-sm"
+                            style="width:100%;justify-content:center;border-color:var(--red);color:var(--red);">
+                            SYNC_NODE</div>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Rules ── -->
+    <section>
+        <div class="container">
+            <div class="section-header">
+                <div class="section-eyebrow">// Rules of Engagement</div>
+                <h2 class="section-title">How It Works</h2>
+            </div>
+            <div class="rules-grid">
+                <div class="rule-card">
+                    <div class="rule-icon">🌐</div>
+                    <div class="rule-title">Browser Only</div>
+                    <div class="rule-text">All challenges are solvable using only your browser and DevTools. Burp Suite
+                        is optional for intermediate/advanced.</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-icon">🚩</div>
+                    <div class="rule-title">Flag Format</div>
+                    <div class="rule-text">All flags follow the format <code
+                            style="font-family:var(--font-mono);color:var(--green);font-size:0.8rem;">FLAG{short_readable_text}</code>.
+                        They appear when you successfully exploit the vulnerability.</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-icon">📚</div>
+                    <div class="rule-title">Educational Purpose</div>
+                    <div class="rule-text">This platform is designed to teach real-world vulnerability classes in a
+                        safe, isolated environment. All scenarios are fictional.</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-icon">⚡</div>
+                    <div class="rule-title">Scoring</div>
+                    <div class="rule-text">Beginner: 50 pts · Intermediate: 150 pts · Advanced: 300 pts. First solves
+                        earn bonus points. Max score: 4,000 pts.</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-icon">🔒</div>
+                    <div class="rule-title">Scope</div>
+                    <div class="rule-text">Stay within this platform only. Do not attempt any techniques on real
+                        external systems. This is a learning-only environment.</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-icon">💾</div>
+                    <div class="rule-title">Progress Saved Locally</div>
+                    <div class="rule-text">Your solved challenges are tracked in your browser's localStorage. Progress
+                        persists across sessions on the same device.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Footer ── -->
+    <footer>
+        <div class="container">
+            <span class="footer-logo">WebPWN.ctf</span> — A browser-only web penetration testing CTF.
+            For educational purposes only. &nbsp;|&nbsp;
+            <a href="scoreboard/index.html">Scoreboard</a> &nbsp;·&nbsp;
+            <a href="beginner/index.html">Start Challenges</a> &nbsp;·&nbsp;
+            <a href="admin/index.html" style="color:var(--text-muted); opacity:0.5;">[ ADMIN_TERMINAL ]</a>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+    <script>
+        const solved = CTF.totalSolved();
+        document.getElementById('hero-solved-count').textContent = solved;
+        document.getElementById('hero-solved-bar').style.width = (solved / 24 * 100) + '%';
+    </script>
+</body>
+
+</html>

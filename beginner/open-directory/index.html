@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unprotected Directory — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Beginner</a></li>
+                <li><a href="../../intermediate/index.html">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Beginner</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Unprotected Directory</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-beginner">🟢 Beginner</span>
+                <span class="badge badge-purple">50 pts</span>
+                <span class="badge badge-info">Directory Listing</span>
+            </div>
+            <h1 class="challenge-title">📂 Unprotected <span>Directory</span></h1>
+            <p class="challenge-subtitle">B-07 &nbsp;·&nbsp; /beginner/open-directory</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's file upload service stores user files under <code>/uploads/</code>. The web server
+                was never configured to disable directory listing for this folder. That means anyone who
+                navigates to it sees a full list of every uploaded file — like browsing a shared hard drive.
+                One of those files is particularly interesting.
+            </p>
+        </div>
+
+        <div class="endpoints-section">
+            <div class="section-label">// Endpoints</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>URL</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>GET</td>
+                            <td><code>/beginner/open-directory/uploads/</code></td>
+                            <td>Open directory listing</td>
+                        </tr>
+                        <tr>
+                            <td>GET</td>
+                            <td><code>/beginner/open-directory/uploads/secret_notes.txt</code></td>
+                            <td>Interesting file in the listing</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="steps">
+            <div class="section-label">// Steps</div>
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <div class="step-title">Navigate to the uploads directory</div>
+                    <div class="step-detail"><a href="uploads/">Browse: /beginner/open-directory/uploads/</a></div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <div class="step-title">Look at the file listing</div>
+                    <div class="step-detail">Find the file that stands out from generic avatars and images</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <div class="step-title">Open the interesting file</div>
+                    <div class="step-detail">Click it to read its contents</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Directory listing is enabled. Just navigate to the <code>uploads/</code> folder and browse the available
+            files.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Back to Beginner</a> &nbsp;·&nbsp;
+            <a href="../client-side-check/index.html">Next Challenge →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('b07', 'FLAG{open_dir_listing}');
+    </script>
+</body>
+
+</html>

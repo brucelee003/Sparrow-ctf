@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /backup/
+Disallow: /beginner/robots-spy/secret-admin-notes/
+Allow: /
+
+# NovaCorp Web Platform v2.1 — do NOT index the above paths!

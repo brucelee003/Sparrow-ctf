@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Insecure Reset Link — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Intermediate</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Insecure Reset Link</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-intermediate">🟡 Intermediate</span>
+                <span class="badge badge-purple">150 pts</span>
+                <span class="badge badge-info">Insecure Reset / IDOR</span>
+            </div>
+            <h1 class="challenge-title">🔄 Insecure Reset <span>Link</span></h1>
+            <p class="challenge-subtitle">I-04 &nbsp;·&nbsp; /intermediate/insecure-reset</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's "Forgot Password" feature sends a reset link with the target username in the URL:
+                <code>/reset?user=alice</code>. The server never verifies that the person clicking the link
+                is actually Alice — it just resets whatever username is in the parameter.
+                You've received a reset link for <code>alice</code>. Change the parameter and reset the admin account
+                instead.
+            </p>
+        </div>
+
+        <div class="endpoints-section">
+            <div class="section-label">// Endpoints</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>URL</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>GET</td>
+                            <td><code>?user=alice</code></td>
+                            <td>Your legitimate reset link</td>
+                        </tr>
+                        <tr>
+                            <td>GET</td>
+                            <td><code>?user=admin</code></td>
+                            <td>Admin reset — returns recovery token (flag)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="vuln-area">
+            <div class="vuln-area-header"><span class="vuln-area-title">🔑 Password Reset Portal</span></div>
+            <div class="vuln-area-body">
+                <div id="reset-display"></div>
+                <div style="margin-top:16px;">
+                    <div class="section-label" style="margin-bottom:8px;">Try different users:</div>
+                    <div class="flex gap-8 flex-wrap">
+                        <a href="?user=alice" class="btn btn-ghost btn-sm">?user=alice</a>
+                        <a href="?user=bob" class="btn btn-ghost btn-sm">?user=bob</a>
+                        <a href="?user=admin" class="btn btn-primary btn-sm">?user=admin</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Look at the URL bar. Change <code>?user=alice</code> to <code>?user=admin</code> and load the page.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Intermediate</a> &nbsp;·&nbsp;
+            <a href="../csrf-form/index.html">Next →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('i04', 'FLAG{predictable_reset_param}');
+
+        const users = {
+            alice: { email: 'alice@novacorp.com', token: null },
+            bob: { email: 'bob@novacorp.com', token: null },
+            admin: { email: 'admin@novacorp.com', token: 'FLAG{predictable_reset_param}' }
+        };
+
+        function loadReset() {
+            const user = new URLSearchParams(location.search).get('user') || '';
+            const displayEl = document.getElementById('reset-display');
+
+            if (!user) {
+                displayEl.innerHTML = '<p style="color:var(--text-muted);">No user specified. Try <code>?user=alice</code></p>';
+                return;
+            }
+
+            if (users[user]) {
+                const u = users[user];
+                const isAdmin = user === 'admin';
+
+                displayEl.innerHTML = `
+      <div class="alert ${isAdmin ? 'alert-danger' : 'alert-info'} mb-16">
+        ${isAdmin ? '⚠️ Resetting admin account — no authorization check performed!' : `✓ Reset link valid for: ${user}`}
+      </div>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">
+        Sending reset confirmation to: <strong style="color:var(--text-primary);">${u.email}</strong>
+      </p>
+      ${u.token ? `
+        <div class="flag-section">
+          <div class="flag-section-header">🚩 Admin Recovery Token</div>
+          <div class="flag-section-body">
+            <p style="color:var(--text-muted);font-size:0.82rem;">Recovery token for account <code>admin</code>:</p>
+            <div class="flag-reveal">🚩 ${u.token}</div>
+          </div>
+        </div>` : `
+        <div class="terminal">
+          <div class="terminal-body">
+            <div class="t-line">Password reset email queued for: ${u.email}</div>
+            <div class="t-line">Recovery token: ****-****-****</div>
+          </div>
+        </div>`}`;
+
+                if (isAdmin && u.token) {
+                    // Discovery hint
+                    if (!CTF.isSolved('i04')) {
+                        const area = document.getElementById('submission-area');
+                        if (!document.querySelector('.discovery-alert')) {
+                            const hintSq = document.createElement('div');
+                            hintSq.className = 'animate-in discovery-alert';
+                            hintSq.style.marginTop = '20px';
+                            hintSq.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> ACCOUNT RECOVERED. Copy the recovery token and submit below.</div>';
+                            area.insertAdjacentElement('beforebegin', hintSq);
+                        }
+                    }
+                }
+            } else {
+                displayEl.innerHTML = `<div class="alert alert-danger">User <code>${user}</code> not found in the system.</div>`;
+            }
+        }
+
+        loadReset();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hidden Comment — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Beginner</a></li>
+                <li><a href="../../intermediate/index.html">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- THE FLAG IS HERE: FLAG{html_comment_secret} -->
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Beginner</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Hidden Comment</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-beginner">🟢 Beginner</span>
+                <span class="badge badge-purple">50 pts</span>
+                <span class="badge badge-info">Information Disclosure</span>
+            </div>
+            <h1 class="challenge-title">💬 Hidden <span>Comment</span></h1>
+            <p class="challenge-subtitle">B-02 &nbsp;·&nbsp; /beginner/hidden-comment</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                During a late-night debugging session, one of NovaCorp's developers left a note to themselves
+                inside the HTML source of this page. Something about credentials, or maybe a token.
+                They pushed the commit and went to bed. Nobody reviewed it. The note is still there.
+                You don't see it on the rendered page — but the source doesn't lie.
+            </p>
+        </div>
+
+        <div class="endpoints-section">
+            <div class="section-label">// Endpoint</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>URL</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>GET</td>
+                            <td><code>/beginner/hidden-comment/</code></td>
+                            <td>This page — contains the hidden comment</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="steps">
+            <div class="section-label">// Steps</div>
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <div class="step-title">View the page source</div>
+                    <div class="step-detail">Press <code>Ctrl+U</code> (or right-click → View Page Source)</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <div class="step-title">Search for HTML comments</div>
+                    <div class="step-detail">Use <code>Ctrl+F</code> and search for <code>&lt;!--</code> or
+                        <code>FLAG</code>
+                    </div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <div class="step-title">Enter the flag below</div>
+                    <div class="step-detail">Copy the flag string and submit it to complete the challenge</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            HTML comments look like <code>&lt;!-- text here --&gt;</code>. They're invisible on the rendered page but
+            fully visible in the raw source code.
+        </div>
+
+        <div id="submission-area"></div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Back to Beginner</a> &nbsp;·&nbsp;
+            <a href="../easy-backup/index.html">Next Challenge →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('b02', 'FLAG{html_comment_secret}');
+    </script>
+</body>
+
+</html>

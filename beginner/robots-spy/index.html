@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Robots Spy — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Beginner</a></li>
+                <li><a href="../../intermediate/index.html">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Beginner</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Robots Spy</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-beginner">🟢 Beginner</span>
+                <span class="badge badge-purple">50 pts</span>
+                <span class="badge badge-info">Information Disclosure</span>
+            </div>
+            <h1 class="challenge-title">🤖 <span>Robots</span> Spy</h1>
+            <p class="challenge-subtitle">B-01 &nbsp;·&nbsp; /beginner/robots-spy</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's sysadmin added a <code>robots.txt</code> file to stop search engines from crawling
+                sensitive internal pages. Smart idea — except they listed every secret path they wanted hidden.
+                Their attempts at security through obscurity just handed you a map.
+                Find the disallowed path and visit it directly to retrieve what's there.
+            </p>
+        </div>
+
+        <div class="endpoints-section">
+            <div class="section-label">// Endpoints</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>URL</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>GET</td>
+                            <td><code>/robots.txt</code></td>
+                            <td>The robots exclusion file</td>
+                        </tr>
+                        <tr>
+                            <td>GET</td>
+                            <td><code>/beginner/robots-spy/secret-admin-notes/</code></td>
+                            <td>Disallowed path — contains the flag</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="steps">
+            <div class="section-label">// Steps</div>
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <div class="step-title">Open the robots.txt file</div>
+                    <div class="step-detail">Navigate to: <a href="../../robots.txt"
+                            target="_blank">../../robots.txt</a> (root of this site)</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <div class="step-title">Find the Disallow entry</div>
+                    <div class="step-detail">Look for a path listed under <code>Disallow:</code> that looks sensitive
+                    </div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <div class="step-title">Visit that path directly</div>
+                    <div class="step-detail">Navigate to the disallowed URL in your browser to retrieve the flag</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            <code>robots.txt</code> is always at the root of a web server. What paths are listed under
+            <code>Disallow:</code>?
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <!-- The actual "secret" page content is now revealed upon correct submission via submission-area -->
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Back to Beginner</a> &nbsp;·&nbsp;
+            <a href="../hidden-comment/index.html">Next Challenge →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        // Initialize manual flag submission
+        CTF.initSubmission('b01', 'FLAG{robots_txt_leak}');
+
+        // The "secret-admin-notes" path simulation
+        function checkPath() {
+            if (location.hash === '#secret-admin-notes' || location.search.includes('secret-admin-notes')) {
+                // We keep this for visual feedback but submission is required for points
+                const area = document.getElementById('submission-area');
+                if (!CTF.isSolved('b01')) {
+                    const msg = document.createElement('div');
+                    msg.className = 'animate-in';
+                    msg.style.color = 'var(--purple)';
+                    msg.style.marginTop = '20px';
+                    msg.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> PATH DISCOVERED: /admin-notes/ revealed. Copy the flag below and submit.</div>';
+                    area.insertAdjacentElement('beforebegin', msg);
+                }
+            }
+        }
+        checkPath();
+        window.addEventListener('hashchange', checkPath);
+    </script>
+</body>
+
+</html>

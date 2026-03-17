@@ -1,0 +1,12 @@
+{
+  "name": "webpwn-ctf",
+  "version": "1.0.0",
+  "description": "Web Penetration Testing Challenge Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

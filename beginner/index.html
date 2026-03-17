@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beginner Challenges — WebPWN CTF</title>
+    <link rel="stylesheet" href="../styles/main.css" />
+    <style>
+        .level-hero {
+            padding: 80px 0 48px;
+            border-bottom: 2px solid var(--charcoal);
+            position: relative;
+        }
+
+        .challenges-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+            padding: 48px 0;
+        }
+
+        .ccard {
+            background: rgba(10, 12, 16, 0.6);
+            border: 1px solid var(--border);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: var(--trans);
+            position: relative;
+            text-decoration: none;
+            color: inherit;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+        }
+
+        .ccard:hover {
+            border-color: var(--cyan);
+            background: rgba(10, 12, 16, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .ccard-num {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+        }
+
+        .ccard-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .ccard-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            flex: 1;
+            font-family: var(--font-mono);
+        }
+
+        .ccard-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .ccard-link {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--cyan);
+            font-family: var(--font-mono);
+            letter-spacing: 0.1em;
+        }
+
+        .solved-indicator {
+            color: var(--cyan);
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+            display: none;
+            text-shadow: var(--cyan-glow);
+        }
+
+        .ccard.is-solved .solved-indicator {
+            display: inline;
+        }
+
+        .ccard.is-solved {
+            border-color: var(--cyan);
+            background: var(--cyan-dim);
+        }
+
+        @media (max-width: 800px) {
+            .challenges-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="active">Beginner</a></li>
+                <li><a href="../intermediate/index.html">Intermediate</a></li>
+                <li><a href="../advanced/index.html">Advanced</a></li>
+                <li><a href="../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="level-hero">
+        <div class="container level-hero-content">
+            <span class="badge badge-info" style="margin-bottom:16px;">NODE_TYPE: BEGINNER // 50_PTS</span>
+            <h1 style="font-size:2.5rem;font-weight:700;margin-bottom:12px;letter-spacing:0.1em;">Beginner_Nodes</h1>
+            <p style="color:var(--text-muted);max-width:560px;">
+                Foundation-level web vulnerabilities. Perfect for those new to pentesting.
+                All challenges require only your browser and DevTools — no special tools needed.
+            </p>
+            <div class="flex gap-16 mt-24" style="flex-wrap:wrap;">
+                <div style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-muted);">
+                    <span class="text-green">8</span> challenges &nbsp;·&nbsp;
+                    <span class="text-green">400</span> total pts &nbsp;·&nbsp;
+                    Solved: <span class="text-green" id="lvl-solved">0</span>/8
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="challenges-grid">
+
+            <a class="ccard" href="robots-spy/index.html" id="card-b01" data-id="b01">
+                <div class="ccard-num">B-01 · Information Disclosure</div>
+                <div class="ccard-title">🤖 Robots Spy</div>
+                <div class="ccard-desc">NovaCorp's robots.txt helpfully lists every path they want hidden. Find the
+                    disallowed entry and visit it directly.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center">
+                        <span class="badge badge-beginner">50 pts</span>
+                        <span class="solved-indicator">✓ Solved</span>
+                    </div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="hidden-comment/index.html" id="card-b02" data-id="b02">
+                <div class="ccard-num">B-02 · Information Disclosure</div>
+                <div class="ccard-title">💬 Hidden Comment</div>
+                <div class="ccard-desc">A developer left a note in the HTML source during debugging. They forgot to
+                    remove it before going to production.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center">
+                        <span class="badge badge-beginner">50 pts</span>
+                        <span class="solved-indicator">✓ Solved</span>
+                    </div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="easy-backup/index.html" id="card-b03" data-id="b03">
+                <div class="ccard-num">B-03 · Exposed Backup File</div>
+                <div class="ccard-title">💾 Easy Backup</div>
+                <div class="ccard-desc">Editing a config file with nano left a ~ backup file publicly accessible. Find
+                    it and read what's inside.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center">
+                        <span class="badge badge-beginner">50 pts</span>
+                        <span class="solved-indicator">✓ Solved</span>
+                    </div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="id-in-url/index.html" id="card-b04" data-id="b04">
+                <div class="ccard-num">B-04 · IDOR</div>
+                <div class="ccard-title">🔢 ID in URL</div>
+                <div class="ccard-desc">Your profile is at ?id=1. No authorization check exists. Can you view someone
+                    else's private data by changing the number?</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center">
+                        <span class="badge badge-beginner">50 pts</span>
+                        <span class="solved-indicator">✓ Solved</span>
+                    </div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="default-login/index.html" id="card-b05" data-id="b05">
+                <div class="ccard-num">B-05 · Default Credentials</div>
+                <div class="ccard-title">🔑 Default Login</div>
+                <div class="ccard-desc">NovaCorp spun up an admin panel and never changed the factory credentials.
+                    What's the most obvious thing to try?</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center">
+                        <span class="badge badge-beginner">50 pts</span>
+                        <span class="solved-indicator">✓ Solved</span>
+                    </div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="weak-search-xss/index.html" id="card-b06" data-id="b06">
+                <div class="ccard-num">B-06 · Reflected XSS</div>
+                <div class="ccard-title">⚡ Weak Search XSS</div>
+                <div class="ccard-desc">The product search box reflects your query directly back into the page with zero
+                    sanitization. Make it execute something.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center">
+                        <span class="badge badge-beginner">50 pts</span>
+                        <span class="solved-indicator">✓ Solved</span>
+                    </div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="open-directory/index.html" id="card-b07" data-id="b07">
+                <div class="ccard-num">B-07 · Directory Listing</div>
+                <div class="ccard-title">📂 Unprotected Directory</div>
+                <div class="ccard-desc">The uploads folder has directory listing enabled. Browse it like a file manager
+                    and open the interesting file.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center">
+                        <span class="badge badge-beginner">50 pts</span>
+                        <span class="solved-indicator">✓ Solved</span>
+                    </div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="client-side-check/index.html" id="card-b08" data-id="b08">
+                <div class="ccard-num">B-08 · Client-Side Bypass</div>
+                <div class="ccard-title">🔍 Client-Side Check</div>
+                <div class="ccard-desc">A "secure" page is gated by a JavaScript password check. The correct password is
+                    right there in the source — if you know where to look.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center">
+                        <span class="badge badge-beginner">50 pts</span>
+                        <span class="solved-indicator">✓ Solved</span>
+                    </div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <span class="footer-logo">WebPWN.ctf</span> — Beginner Level &nbsp;·&nbsp;
+            <a href="../index.html">Home</a> &nbsp;·&nbsp;
+            <a href="../intermediate/index.html">Intermediate →</a> &nbsp;·&nbsp;
+            <a href="../admin/index.html" style="color:var(--text-muted); opacity:0.5;">[ ADMIN_TERMINAL ]</a>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        window.renderScoreboard = function() {
+            window.updateCTFUI();
+            const solved = CTF.getSolved();
+            let count = 0;
+            ['b01', 'b02', 'b03', 'b04', 'b05', 'b06', 'b07', 'b08'].forEach(id => {
+                if (solved[id]) { document.getElementById('card-' + id)?.classList.add('is-solved'); count++; }
+            });
+            document.getElementById('lvl-solved').textContent = count;
+        };
+        window.renderScoreboard();
+    </script>
+</body>
+
+</html>

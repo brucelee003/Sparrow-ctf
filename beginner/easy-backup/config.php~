@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>config.php~ — NovaCorp Backup</title>
+  <link rel="stylesheet" href="../../styles/main.css" />
+  <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+<body>
+<nav class="nav"><div class="nav-inner">
+  <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+  <ul class="nav-links">
+    <li><a href="../index.html" class="active">Beginner</a></li>
+    <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+  </ul>
+</div></nav>
+
+<div class="container-sm" style="padding-top:48px;">
+  <div class="alert alert-warning mb-16">
+    ⚠️ You are viewing: <code>config.php~</code> — a nano editor backup file. This should NOT be publicly accessible!
+  </div>
+
+  <div class="code-block">
+    <div class="code-block-header">config.php~ — NovaCorp Production Config (BACKUP)</div>
+    <div class="code-block-body">
+<span class="cmt">&lt;?php</span><br>
+<span class="cmt">// NovaCorp Configuration — Production</span><br>
+<span class="cmt">// Generated: 2024-03-15 | Last edited: 2024-11-20</span><br>
+<br>
+<span class="kw">define</span>(<span class="str">'DB_HOST'</span>, <span class="str">'db.novacorp.internal'</span>);<br>
+<span class="kw">define</span>(<span class="str">'DB_USER'</span>, <span class="str">'nova_prod'</span>);<br>
+<span class="kw">define</span>(<span class="str">'DB_PASS'</span>, <span class="str">'Sup3rS3cur3P@ss!'</span>); <span class="cmt">// TODO: rotate this</span><br>
+<span class="kw">define</span>(<span class="str">'DB_NAME'</span>, <span class="str">'novacorp_prod'</span>);<br>
+<br>
+<span class="kw">define</span>(<span class="str">'ADMIN_EMAIL'</span>, <span class="str">'admin@novacorp.com'</span>);<br>
+<span class="kw">define</span>(<span class="str">'SECRET_TOKEN'</span>, <span class="str">'<span class="fg">FLAG{backup_file_exposed}</span>'</span>);<br>
+<br>
+<span class="cmt">// Feature flags</span><br>
+<span class="kw">define</span>(<span class="str">'DEBUG_MODE'</span>, <span class="str">true</span>); <span class="cmt">// TODO: set false in prod!</span><br>
+<span class="kw">define</span>(<span class="str">'DISABLE_AUTH'</span>, <span class="str">false</span>);<br>
+<span class="cmt">?&gt;</span>
+    </div>
+  </div>
+
+  <div class="flag-section mt-24">
+    <div class="flag-section-header">🚩 Flag Captured — B-03</div>
+    <div class="flag-section-body">
+      <p style="color:var(--text-muted);font-size:0.85rem;">
+        You found the nano backup file. The <code>SECRET_TOKEN</code> constant contains the flag.
+        In real engagements, these files often contain live database credentials!
+      </p>
+      <div class="flag-reveal">🚩 FLAG{backup_file_exposed}</div>
+    </div>
+  </div>
+  <div style="margin-top:20px;">
+    <a href="index.html" class="btn btn-ghost btn-sm">← Back to Challenge</a>
+  </div>
+</div>
+<div style="height:80px;"></div>
+<footer><div class="container-sm"><span class="footer-logo">WebPWN.ctf</span></div></footer>
+<script src="../../js/app.js"></script>
+<script>CTF.markSolved('b03', 'FLAG{backup_file_exposed}');</script>
+</body>
+</html>

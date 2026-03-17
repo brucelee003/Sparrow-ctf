@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SSTI Template — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Advanced</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">SSTI Template</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-advanced">🔴 Advanced</span>
+                <span class="badge badge-purple">300 pts</span>
+                <span class="badge badge-info">SSTI</span>
+            </div>
+            <h1 class="challenge-title">📌 SSTI <span>Template</span></h1>
+            <p class="challenge-subtitle">A-08 &nbsp;·&nbsp; /advanced/ssti-template</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's email notification system generates greetings using a Jinja2-style template engine.
+                User-supplied input is inserted directly into the template string before rendering:
+                <code>f"Hello, {name}!"</code> → <code>render_template("Hello, {{name}}!")</code>.
+                If the template engine interprets <code>{{7*7}}</code> as a mathematical expression
+                rather than plain text, you've confirmed SSTI. From there, escalate to read server-side data.
+            </p>
+        </div>
+
+        <div class="vuln-area">
+            <div class="vuln-area-header"><span class="vuln-area-title">📧 Notification Preview System</span></div>
+            <div class="vuln-area-body">
+                <div class="form-group mb-12">
+                    <label class="form-label">Enter your name (reflected into the email template):</label>
+                    <input type="text" class="form-input" id="ssti-input" placeholder="e.g. Alice or {{7*7}}"
+                        autocomplete="off" />
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                    <button class="btn btn-ghost btn-sm" onclick="setInput('Alice')">Normal name</button>
+                    <button class="btn btn-ghost btn-sm" onclick="setInput('{{7*7}}')">{{7*7}} (probe)</button>
+                    <button class="btn btn-ghost btn-sm" onclick="setInput('{{config}}')">{{config}}</button>
+                    <button class="btn btn-ghost btn-sm" onclick="setInput('{{flag}}')">{{flag}}</button>
+                    <button class="btn btn-ghost btn-sm" onclick="setInput('{{self.__class__.__mro__}}')">MRO
+                        chain</button>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="renderTemplate()">Preview Email →</button>
+                <div id="preview-result" style="margin-top:20px;"></div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Start with <code>{{7*7}}</code> — if the output shows <code>49</code> instead of <code>{{7*7}}</code>,
+            the template engine is evaluating your input. Then try <code>{{config}}</code> or <code>{{flag}}</code>
+            to access server-side variables.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Advanced</a> &nbsp;·&nbsp;
+            <a href="../../scoreboard/index.html">🏆 Scoreboard</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('a06', 'FLAG{ssti_template_injection}');
+
+        // Simulated template context
+        const TEMPLATE_CTX = {
+            server: 'NovaCorp WS-01',
+            env: 'production',
+            config: '{"DEBUG":false,"SECRET_KEY":"s3cr3t_pr0d_k3y","DB_PASS":"Sup3rS3cur3!"}',
+            flag: 'FLAG{ssti_template_injection}',
+            __class__: { __mro__: ['Template', 'object'] }
+        };
+
+        function setInput(val) {
+            document.getElementById('ssti-input').value = val;
+        }
+
+        function evalTemplate(input) {
+            // Detect template expressions {{...}}
+            return input.replace(/\{\{([^}]+)\}\}/g, (match, expr) => {
+                expr = expr.trim();
+                // Math expressions
+                try {
+                    const mathResult = Function('"use strict"; return (' + expr + ')')();
+                    if (typeof mathResult === 'number' || typeof mathResult === 'boolean') return String(mathResult);
+                } catch (e) { }
+
+                // Context lookups
+                const key = expr.replace(/\./g, '_').split(/\s+/)[0];
+                if (TEMPLATE_CTX[expr]) return TEMPLATE_CTX[expr];
+                if (expr.includes('.')) {
+                    const parts = expr.split('.');
+                    let val = TEMPLATE_CTX;
+                    for (const p of parts) { val = val?.[p]; if (val === undefined) break; }
+                    if (val !== undefined) return typeof val === 'object' ? JSON.stringify(val) : String(val);
+                }
+                return `[undefined: ${expr}]`;
+            });
+        }
+
+        function renderTemplate() {
+            const input = document.getElementById('ssti-input').value;
+            const result = document.getElementById('preview-result');
+
+            const hasTemplate = /\{\{[^}]+\}\}/.test(input);
+            const rendered = evalTemplate(input);
+            const isSSTI = hasTemplate && rendered !== input;
+            const hasFlag = rendered.includes('FLAG{');
+            const isMathProbe = input.includes('{{7*7}}') && rendered.includes('49');
+
+            const emailHtml = `
+    <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:var(--r-md);padding:20px;max-width:440px;margin-bottom:16px;">
+      <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:8px;">From: noreply@novacorp.com &nbsp;|&nbsp; To: user@example.com</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:16px;">Subject: Welcome to NovaCorp</div>
+      <p style="color:${hasFlag ? 'var(--magenta)' : 'var(--text-secondary)'};font-size:0.9rem;">Hello, <strong style="color:${isSSTI ? 'var(--magenta)' : 'var(--text-primary);'}">${rendered.replace(/</g, '&lt;')}</strong>!</p>
+      <p style="color:var(--text-muted);font-size:0.8rem;margin-top:8px;">Thank you for joining NovaCorp. Please verify your email address.</p>
+    </div>`;
+
+            let alertHtml = '';
+            if (isMathProbe) {
+                alertHtml = `<div class="alert alert-danger mb-12">🚨 SSTI Confirmed! Input <code>{{7*7}}</code> evaluated to <code>49</code>. The template engine is executing your expressions.</div>`;
+            } else if (hasFlag) {
+                alertHtml = `<div class="alert alert-danger mb-12">🚨 Server-side variable leaked! The template engine exposed the <code>flag</code> variable.</div>`;
+            } else if (isSSTI) {
+                alertHtml = `<div class="alert alert-warning mb-12">⚠️ Template expression evaluated on server side.</div>`;
+            }
+
+            result.innerHTML = alertHtml + emailHtml +
+                `<div class="code-block"><div class="code-block-header">Template rendering:</div>
+    <div class="code-block-body" style="font-size:0.8rem;">
+      Input: <span style="color:var(--yellow);">"${input.replace(/</g, '&lt;')}"</span><br>
+      Rendered: <span style="color:var(--${hasFlag ? 'magenta' : 'green'});">"${rendered.replace(/</g, '&lt;')}"</span>
+    </div></div>`;
+
+            if (hasFlag) {
+                // Discovery hint
+                if (!CTF.isSolved('a06')) {
+                    const area = document.getElementById('submission-area');
+                    if (!document.querySelector('.discovery-alert')) {
+                        const hintDiv = document.createElement('div');
+                        hintDiv.className = 'animate-in discovery-alert';
+                        hintDiv.style.marginTop = '20px';
+                        hintDiv.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> SERVER-SIDE TEMPLATE INJECTION CONFIRMED. Flag leaked via context variable. Copy and submit below.</div>';
+                        area.insertAdjacentElement('beforebegin', hintDiv);
+                    }
+                }
+            }
+        }
+
+        document.getElementById('ssti-input').addEventListener('keydown', e => { if (e.key === 'Enter') renderTemplate(); });
+    </script>
+</body>
+
+</html>

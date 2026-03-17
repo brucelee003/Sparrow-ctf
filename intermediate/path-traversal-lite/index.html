@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Path Traversal Lite — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Intermediate</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Path Traversal Lite</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-intermediate">🟡 Intermediate</span>
+                <span class="badge badge-purple">150 pts</span>
+                <span class="badge badge-info">Path Traversal</span>
+            </div>
+            <h1 class="challenge-title">🗂️ Path Traversal <span>Lite</span></h1>
+            <p class="challenge-subtitle">I-08 &nbsp;·&nbsp; /intermediate/path-traversal-lite</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's document viewer loads files based on a <code>?file=</code> parameter.
+                The application is supposed to only serve files from <code>/docs/</code>, but doesn't sanitize
+                the filename. Using <code>../</code> sequences, you can "traverse" out of the docs directory
+                and read files from other parts of the server — including sensitive configuration files.
+            </p>
+        </div>
+
+        <div class="endpoints-section">
+            <div class="section-label">// Endpoint</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>URL</th>
+                            <th>Resolves To</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>?file=readme.txt</code></td>
+                            <td>/docs/readme.txt</td>
+                            <td>Normal doc</td>
+                        </tr>
+                        <tr>
+                            <td><code>?file=../../../etc/passwd</code></td>
+                            <td>/etc/passwd</td>
+                            <td>Server file (flag inside)</td>
+                        </tr>
+                        <tr>
+                            <td><code>?file=../../config/secret.cfg</code></td>
+                            <td>/config/secret.cfg</td>
+                            <td>Config file (flag)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="vuln-area">
+            <div class="vuln-area-header"><span class="vuln-area-title">📄 NovaCorp Document Viewer</span></div>
+            <div class="vuln-area-body">
+                <div class="flex gap-8 mb-16 flex-wrap">
+                    <input type="text" class="form-input" id="file-input"
+                        placeholder="filename.txt or ../../../etc/passwd" style="flex:1;" />
+                    <button class="btn btn-primary btn-sm" onclick="loadFile()">Load →</button>
+                </div>
+                <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn btn-ghost btn-sm" onclick="setFile('readme.txt')">readme.txt</button>
+                    <button class="btn btn-ghost btn-sm" onclick="setFile('policy.txt')">policy.txt</button>
+                    <button class="btn btn-ghost btn-sm"
+                        onclick="setFile('../../../etc/passwd')">../../../etc/passwd</button>
+                    <button class="btn btn-ghost btn-sm"
+                        onclick="setFile('../../config/secret.cfg')">../../config/secret.cfg</button>
+                </div>
+                <div id="file-display"></div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Try <code>?file=../../../etc/passwd</code> or <code>../../config/secret.cfg</code> to traverse outside the
+            /docs/ directory.
+        </div>
+
+        <div id="flag-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Intermediate</a> &nbsp;·&nbsp;
+            <a href="../../advanced/index.html">Next: Advanced →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('i08', 'FLAG{path_traversal_escape}');
+
+        const files = {
+            // Normal docs
+            'readme.txt': `NovaCorp Document Repository\n============================\nWelcome to the internal document system.\nAuthorised personnel only.\n\nVersion 2.4.1 | Updated 2024-11-01`,
+            'policy.txt': `NovaCorp Security Policy\n========================\nAll employees must use 2FA.\nPasswords must be rotated every 90 days.\nReport incidents to security@novacorp.com.`,
+            // Traversal targets
+            '../../../etc/passwd': `root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nnovacorp:x:1001:1001:NovaCorp Service:/home/novacorp:/bin/bash\n\n# FLAG hidden in shadow file — try /etc/shadow\n# Secret token: FLAG{path_traversal_escape}`,
+            '../../config/secret.cfg': `[novacorp_production]\ndb_host = db.novacorp.internal\ndb_pass = Sup3rS3cr3t!\napi_key = sk_live_novacorp_xyz\nsecret_flag = FLAG{path_traversal_escape}`,
+            '/etc/passwd': `root:x:0:0:root:/root:/bin/bash\n...\n# Access flag: FLAG{path_traversal_escape}`
+        };
+
+        function setFile(name) {
+            document.getElementById('file-input').value = name;
+            loadFile();
+        }
+
+        function loadFile() {
+            const name = document.getElementById('file-input').value.trim();
+            const display = document.getElementById('file-display');
+
+            const isTraversal = name.includes('../') || name.startsWith('/etc') || name.startsWith('/config');
+            const content = files[name];
+
+            const header = `<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;">
+    Reading: <code style="color:${isTraversal ? 'var(--magenta)' : 'var(--text-primary)'};">/docs/${name}</code>
+    ${isTraversal ? '<span style="color:var(--magenta);"> ← PATH TRAVERSAL DETECTED</span>' : ''}
+  </div>`;
+
+            if (content) {
+                display.innerHTML = `${header}<div class="terminal"><div class="terminal-body">
+      ${content.split('\n').map(l => `<div class="t-line">${l.replace(/</g, '&lt;').replace(/FLAG\{[^}]+\}/g, m => `<span class="t-flag">${m}</span>`)}</div>`).join('')}
+    </div></div>`;
+
+                if (isTraversal && content.includes('FLAG{path_traversal_escape}')) {
+                    // Discovery hint
+                    if (!CTF.isSolved('i08')) {
+                        const area = document.getElementById('submission-area');
+                        if (!document.querySelector('.discovery-alert')) {
+                            const hintDiv = document.createElement('div');
+                            hintDiv.className = 'animate-in discovery-alert';
+                            hintDiv.style.marginTop = '20px';
+                            hintDiv.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> FILE SYSTEM ESCAPED. Copy the flag from the document and submit below.</div>';
+                            area.insertAdjacentElement('beforebegin', hintDiv);
+                        }
+                    }
+                }
+            } else {
+                display.innerHTML = `${header}<div class="alert alert-danger">File not found: <code>/docs/${name}</code></div>`;
+            }
+        }
+
+        const initialFile = new URLSearchParams(location.search).get('file');
+        if (initialFile) { document.getElementById('file-input').value = initialFile; loadFile(); }
+    </script>
+</body>
+
+</html>

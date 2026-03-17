@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Default Login — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Beginner</a></li>
+                <li><a href="../../intermediate/index.html">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Beginner</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Default Login</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-beginner">🟢 Beginner</span>
+                <span class="badge badge-purple">50 pts</span>
+                <span class="badge badge-info">Default Credentials</span>
+            </div>
+            <h1 class="challenge-title">🔑 Default <span>Login</span></h1>
+            <p class="challenge-subtitle">B-05 &nbsp;·&nbsp; /beginner/default-login</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp spun up a new admin panel last quarter and assigned DevOps to "handle the credentials later."
+                Later never came. The panel is live in production with the factory defaults still set.
+                Common default username/password combinations are the very first thing a pentester tries.
+                Can you guess what they left as the password?
+            </p>
+        </div>
+
+        <div class="endpoints-section">
+            <div class="section-label">// Endpoints</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>URL</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>POST</td>
+                            <td><code>/beginner/default-login/</code></td>
+                            <td>Admin login form</td>
+                        </tr>
+                        <tr>
+                            <td>GET</td>
+                            <td><code>/beginner/default-login/#dashboard</code></td>
+                            <td>Admin dashboard (after successful login)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Login panel -->
+        <div id="login-panel">
+            <div class="vuln-area">
+                <div class="vuln-area-header">
+                    <span class="vuln-area-title">🔐 NovaCorp Admin Panel</span>
+                </div>
+                <div class="vuln-area-body">
+                    <div style="max-width:340px;margin:0 auto;">
+                        <div style="text-align:center;margin-bottom:24px;">
+                            <div style="font-size:2.5rem;">🏢</div>
+                            <div style="font-weight:700;font-size:1.1rem;margin-top:8px;">NovaCorp Admin</div>
+                            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">Enter credentials to
+                                continue</div>
+                        </div>
+                        <div class="form-group mb-16">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-input" id="login-user" placeholder="username"
+                                autocomplete="off" />
+                        </div>
+                        <div class="form-group mb-16">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-input" id="login-pass" placeholder="password" />
+                        </div>
+                        <button class="btn btn-primary" style="width:100%;" onclick="tryLogin()">Login →</button>
+                        <div id="login-error" style="margin-top:12px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard (shown after successful login) -->
+        <div id="dashboard-panel" style="display:none;">
+            <div class="vuln-area">
+                <div class="vuln-area-header">
+                    <span class="vuln-area-title" style="color:var(--green);">✓ Authenticated — NovaCorp Admin
+                        Dashboard</span>
+                </div>
+                <div class="vuln-area-body">
+                    <div class="grid-2" style="gap:16px;margin-bottom:24px;">
+                        <div class="card">
+                            <div style="color:var(--text-muted);font-size:0.75rem;">Total Users</div>
+                            <div style="font-size:1.5rem;font-weight:700;color:var(--green);">1,247</div>
+                        </div>
+                        <div class="card">
+                            <div style="color:var(--text-muted);font-size:0.75rem;">Active Sessions</div>
+                            <div style="font-size:1.5rem;font-weight:700;color:var(--yellow);">83</div>
+                        </div>
+                    </div>
+                    <div class="flag-section">
+                        <div class="flag-section-header">🚩 Admin Secret Token</div>
+                        <div class="flag-section-body">
+                            <p style="color:var(--text-muted);font-size:0.85rem;">Access granted via default
+                                credentials. The admin's secret token:</p>
+                            <div class="flag-reveal">🚩 FLAG{default_creds_admin}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            What's the most common default credential pair in the world? Think: factory defaults.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Back to Beginner</a> &nbsp;·&nbsp;
+            <a href="../weak-search-xss/index.html">Next Challenge →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('b05', 'FLAG{default_creds_admin}');
+
+        function tryLogin() {
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            const errEl = document.getElementById('login-error');
+
+            if (user === 'admin' && pass === 'admin') {
+                document.getElementById('login-panel').style.display = 'none';
+                document.getElementById('dashboard-panel').style.display = 'block';
+
+                // Show hint for submission if not solved
+                if (!CTF.isSolved('b05')) {
+                    const area = document.getElementById('submission-area');
+                    const hintSq = document.createElement('div');
+                    hintSq.className = 'animate-in';
+                    hintSq.style.marginTop = '20px';
+                    hintSq.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> AUTHENTICATION BYPASSED. Use the discovered secret token below to submit.</div>';
+                    area.insertAdjacentElement('beforebegin', hintSq);
+                }
+            } else {
+                errEl.innerHTML = '<div class="alert alert-danger">Invalid credentials. Access denied.</div>';
+                document.getElementById('login-pass').value = '';
+            }
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+
+        if (CTF.isSolved('b05')) {
+            document.getElementById('login-panel').style.display = 'none';
+            document.getElementById('dashboard-panel').style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>

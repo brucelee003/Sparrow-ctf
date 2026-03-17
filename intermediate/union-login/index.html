@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Union Login — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Intermediate</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Union Login</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-intermediate">🟡 Intermediate</span>
+                <span class="badge badge-purple">150 pts</span>
+                <span class="badge badge-info">SQL Injection</span>
+            </div>
+            <h1 class="challenge-title">💉 Union <span>Login</span></h1>
+            <p class="challenge-subtitle">I-01 &nbsp;·&nbsp; /intermediate/union-login</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's login endpoint constructs its database query using direct string concatenation:
+                <code>SELECT * FROM users WHERE username='[input]' AND password='[input]'</code>.
+                No parameterized queries, no prepared statements. A single quote in your input breaks out
+                of the string literal and lets you rewrite the logic of the query itself.
+                Bypass authentication entirely — no valid password needed.
+            </p>
+        </div>
+
+        <div class="endpoints-section">
+            <div class="section-label">// Backend Query (vulnerable)</div>
+            <div class="code-block">
+                <div class="code-block-header">login.php (server-side)</div>
+                <div class="code-block-body">
+                    <span class="kw">$query</span> = <span class="str">"SELECT * FROM users WHERE username='"</span> .
+                    $_POST[<span class="str">'user'</span>] . <span class="str">"' AND password='"</span> . $_POST[<span
+                        class="str">'pass'</span>] . <span class="str">"'"</span>;<br>
+                    <span class="cmt">// No sanitization. String concatenation. Classic.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login form -->
+        <div id="login-panel">
+            <div class="vuln-area">
+                <div class="vuln-area-header"><span class="vuln-area-title">🔐 NovaCorp Member Login</span></div>
+                <div class="vuln-area-body">
+                    <div style="max-width:360px;margin:0 auto;">
+                        <div class="form-group mb-16">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-input" id="sqli-user" placeholder="e.g. admin"
+                                autocomplete="off" />
+                        </div>
+                        <div class="form-group mb-16">
+                            <label class="form-label">Password</label>
+                            <input type="text" class="form-input" id="sqli-pass" placeholder="password"
+                                autocomplete="off" />
+                        </div>
+                        <button class="btn btn-primary" style="width:100%;" onclick="tryLogin()">Login →</button>
+                        <div id="login-result" style="margin-top:12px;"></div>
+                        <div id="query-preview" style="margin-top:16px;font-size:0.78rem;color:var(--text-muted);">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="dashboard" style="display:none;">
+            <div class="flag-section">
+                <div class="flag-section-header">🚩 Flag — Admin Dashboard</div>
+                <div class="flag-section-body">
+                    <p style="color:var(--text-muted);font-size:0.85rem;">You bypassed authentication using SQL
+                        injection. The query evaluated to TRUE for all rows.</p>
+                    <div class="flag-reveal">🚩 FLAG{sqli_auth_bypass}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Try entering <code>' OR '1'='1</code> as the username (leave password as anything).
+            Watch the "Query Preview" below the form to understand what the SQL becomes.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Intermediate</a> &nbsp;·&nbsp;
+            <a href="../stored-xss-comment/index.html">Next →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('i01', 'FLAG{sqli_auth_bypass}');
+        CTF.initSubmission('i02', 'FLAG{stored_xss_comment}');
+
+        const STORAGE_KEY = 'xss_comments';
+
+        function getComments() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+            catch { return []; }
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+        }
+
+        function postComment() {
+            const name = document.getElementById('comment-name').value.trim() || 'Anonymous';
+            const body = document.getElementById('comment-body').value.trim();
+            if (!body) { document.getElementById('post-result').innerHTML = '<div class="alert alert-danger">Comment cannot be empty.</div>'; return; }
+
+            const comments = getComments();
+            comments.push({ name, body, date: new Date().toISOString().split('T')[0] });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
+            if (window.syncToFirebase) window.syncToFirebase();
+
+            // Also render in the "safe" view (escaped)
+            const safeBody = body.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            document.getElementById('comment-list').innerHTML += `
+    <div class="card" style="padding:14px;margin-bottom:10px;">
+      <span style="font-weight:600;font-size:0.85rem;">${name.replace(/</g, '&lt;')}</span>
+      <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">${new Date().toISOString().split('T')[0]}</span>
+      <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:6px;">${safeBody}</p>
+    </div>`;
+
+            document.getElementById('comment-body').value = '';
+            document.getElementById('post-result').innerHTML = '<div class="alert alert-success">✓ Comment stored! Switch to Admin View to simulate admin loading.</div>';
+        }
+
+        function loadAdminView() {
+            const comments = getComments();
+            const listEl = document.getElementById('admin-comment-list');
+            if (comments.length === 0) {
+                listEl.innerHTML = '<p style="color:var(--text-muted);">No comments to review.</p>';
+                return;
+            }
+
+            let hasXSS = false;
+            listEl.innerHTML = comments.map(c => {
+                if (/<script|<img|<svg|onerror|onload/i.test(c.body)) hasXSS = true;
+                return `<div class="card" style="padding:14px;margin-bottom:10px;">
+      <span style="font-weight:600;font-size:0.85rem;">${c.name}</span>
+      <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">${c.date}</span>
+      <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:6px;">${c.body}</div>
+    </div>`;
+            }).join('');
+
+            if (hasXSS) {
+                listEl.innerHTML += `<div class="alert alert-danger mt-12">🚨 XSS payload executed in admin context. Use the discovered access token below to submit.</div>`;
+                listEl.innerHTML += `<div class="flag-reveal mt-12">🚩 FLAG{stored_xss_comment}</div>`;
+
+                // Discovery hint for the component area
+                if (!CTF.isSolved('i02')) {
+                    const area = document.getElementById('submission-area');
+                    if (!document.querySelector('.discovery-alert')) {
+                        const hintSq = document.createElement('div');
+                        hintSq.className = 'animate-in discovery-alert';
+                        hintSq.style.marginTop = '20px';
+                        hintSq.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> ADMIN SESSION HIJACKED. Copy the flag from the admin view and submit.</div>';
+                        area.insertAdjacentElement('beforebegin', hintSq);
+                    }
+                }
+            }
+        }
+
+        function tryLogin() {
+            const user = document.getElementById('sqli-user').value;
+            const pass = document.getElementById('sqli-pass').value;
+            const preview = document.getElementById('query-preview');
+            const result = document.getElementById('login-result');
+
+            const query = `SELECT * FROM users WHERE username='${user}' AND password='${pass}'`;
+            preview.innerHTML = `<strong>Constructed query:</strong><br><code style="color:var(--magenta);word-break:break-all;">${query.replace(/</g, '&lt;')}</code>`;
+
+            // Detect SQLi bypass patterns
+            const sqliBypass = /'\s*or\s*'?1'?\s*=\s*'?1|'\s*or\s*1\s*=\s*1|'--|\s*;\s*drop|'\s*or\s*'?[a-z]'?\s*=\s*'?[a-z]/i;
+            if (sqliBypass.test(user) || sqliBypass.test(pass)) {
+                document.getElementById('login-panel').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+
+                // Discovery hint
+                if (!CTF.isSolved('i01')) {
+                    const area = document.getElementById('submission-area');
+                    const hintSq = document.createElement('div');
+                    hintSq.className = 'animate-in';
+                    hintSq.style.marginTop = '20px';
+                    hintSq.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> SQL INJECTION SUCCESSFUL. Copy the flag from the dashboard and submit.</div>';
+                    area.insertAdjacentElement('beforebegin', hintSq);
+                }
+            } else {
+                result.innerHTML = '<div class="alert alert-danger">Login failed: Invalid credentials.</div>';
+            }
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+
+        if (CTF.isSolved('i01')) {
+            document.getElementById('login-panel').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>

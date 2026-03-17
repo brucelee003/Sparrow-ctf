@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Race Coupon — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Advanced</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Race Coupon</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-advanced">🔴 Advanced</span>
+                <span class="badge badge-purple">300 pts</span>
+                <span class="badge badge-info">Race Condition</span>
+            </div>
+            <h1 class="challenge-title">⚡ Race <span>Coupon</span></h1>
+            <p class="challenge-subtitle">A-05 &nbsp;·&nbsp; /advanced/race-coupon</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's checkout has a "one-use coupon" feature. The validation logic is:
+                <code>1. Check if used → 2. Apply discount → 3. Mark as used</code>.
+                Steps 1 and 3 are non-atomic — there's a race window between the check and the mark.
+                Send multiple simultaneous requests during that window and the coupon applies multiple times.
+                Simulate a 5-request parallel burst and observe what happens.
+            </p>
+        </div>
+
+        <div class="vuln-area">
+            <div class="vuln-area-header"><span class="vuln-area-title">🛒 NovaCorp Checkout</span></div>
+            <div class="vuln-area-body">
+                <div class="grid-2 mb-20" style="gap:16px;">
+                    <div style="background:rgba(0,0,0,0.2);padding:16px;border-radius:var(--r-md);">
+                        <div style="font-size:0.75rem;color:var(--text-muted);">Cart Total</div>
+                        <div style="font-size:1.5rem;font-weight:700;">$<span id="total">100.00</span></div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.2);padding:16px;border-radius:var(--r-md);">
+                        <div style="font-size:0.75rem;color:var(--text-muted);">Coupon Applied</div>
+                        <div id="coupon-status" style="font-size:1rem;font-weight:700;color:var(--text-muted);">None
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-16">
+                    <label class="form-label">Coupon Code</label>
+                    <input type="text" class="form-input" id="coupon-input" value="SAVE50" readonly />
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">One-time use coupon — $50 off
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <button class="btn btn-ghost btn-sm" onclick="resetCoupon()">Reset coupon state ↺</button>
+                </div>
+
+                <div class="code-block mb-16">
+                    <div class="code-block-header">Vulnerable server logic:</div>
+                    <div class="code-block-body">
+                        <span class="cmt">// 1. Check</span><br>
+                        <span class="kw">if</span> (coupon.used) return error(<span class="str">"Already
+                            used"</span>);<br>
+                        <span class="cmt">// 2. Apply (non-atomic gap ↓)</span><br>
+                        order.discount += coupon.value;<br>
+                        <span class="cmt">// 3. Mark used (too late!)</span><br>
+                        coupon.used = <span class="kw">true</span>;
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="race-btn" onclick="startRace()">⚡ Send 5 Parallel Requests</button>
+                <div id="race-log" style="margin-top:20px;"></div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Click the button to simulate 5 simultaneous coupon redemption requests. Because the check and mark
+            are non-atomic, multiple requests pass the "already used?" check before any marks the coupon as used.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Advanced</a> &nbsp;·&nbsp;
+            <a href="../cache-poison/index.html">Next →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('a05', 'FLAG{race_condition_coupon}');
+
+        let couponUsed = false;
+        let discountTotal = 0;
+        let orderTotal = 100;
+
+        function resetCoupon() {
+            couponUsed = false; discountTotal = 0; orderTotal = 100;
+            document.getElementById('total').textContent = '100.00';
+            document.getElementById('coupon-status').textContent = 'None';
+            document.getElementById('coupon-status').style.color = 'var(--text-muted)';
+            document.getElementById('race-log').innerHTML = '';
+        }
+
+        async function applyCoupon(reqId) {
+            await new Promise(r => setTimeout(r, Math.random() * 50));
+            if (!couponUsed) { // race window — multiple can pass this check simultaneously
+                discountTotal += 50;
+                orderTotal -= 50;
+                if (orderTotal < 0) orderTotal = 0;
+                await new Promise(r => setTimeout(r, 10 + Math.random() * 30)); // async gap
+                couponUsed = true; // mark happens after all simultaneous checks
+                return { ok: true, discount: 50 };
+            }
+            return { ok: false };
+        }
+
+        async function startRace() {
+            resetCoupon();
+            const logEl = document.getElementById('race-log');
+            logEl.innerHTML = `<div class="terminal"><div class="terminal-header"><span class="t-dot r"></span><span class="t-dot y"></span><span class="t-dot g"></span>
+    <span class="terminal-label">Race Condition Log — 5 Parallel Requests</span></div>
+    <div class="terminal-body" id="race-body"></div></div>`;
+
+            function addLog(text, cls = '') {
+                const el = document.getElementById('race-body');
+                const d = document.createElement('div');
+                d.className = 't-line ' + cls;
+                d.textContent = text;
+                el.appendChild(d);
+            }
+
+            addLog('Sending 5 simultaneous POST /checkout/apply-coupon requests…');
+            await new Promise(r => setTimeout(r, 400));
+
+            // Reset state before race so all 5 fire "simultaneously"
+            couponUsed = false; discountTotal = 0; orderTotal = 100;
+
+            const results = await Promise.all([1, 2, 3, 4, 5].map(i => applyCoupon(i)));
+
+            let successes = 0;
+            results.forEach((r, i) => {
+                if (r.ok) {
+                    successes++;
+                    addLog(`Request ${i + 1}: ✓ Coupon applied! -$50`, 't-cmd');
+                } else {
+                    addLog(`Request ${i + 1}: ✗ Already used.`);
+                }
+            });
+
+            addLog('');
+            if (successes > 1) {
+                addLog(`🚨 RACE CONDITION: Coupon applied ${successes}x (should be 1x)`);
+                addLog(`   Total discount: $${successes * 50} — Order total: $${Math.max(0, 100 - successes * 50)}`);
+                document.getElementById('total').textContent = Math.max(0, 100 - successes * 50).toFixed(2);
+                document.getElementById('coupon-status').textContent = `APPLIED ×${successes} (BUG!)`;
+                document.getElementById('coupon-status').style.color = 'var(--magenta)';
+
+                const flagDiv = document.createElement('div');
+                flagDiv.innerHTML = `<div class="flag-section mt-16">
+      <div class="flag-section-header">🚩 Race Condition Confirmed</div>
+      <div class="flag-section-body">
+        <p style="color:var(--text-muted);font-size:0.85rem;">Coupon applied ${successes} times due to non-atomic check-and-mark. A real attack would use concurrent HTTP requests.</p>
+        <div class="flag-reveal">🚩 FLAG{race_condition_coupon}</div>
+      </div>
+    </div>`;
+                logEl.appendChild(flagDiv);
+
+                // Discovery hint
+                if (!CTF.isSolved('a05')) {
+                    const area = document.getElementById('submission-area');
+                    if (!document.querySelector('.discovery-alert')) {
+                        const hintSq = document.createElement('div');
+                        hintSq.className = 'animate-in discovery-alert';
+                        hintSq.style.marginTop = '20px';
+                        hintSq.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> RACE CONDITION EXPLOITED. Multi-redemption successful. Copy the flag and submit below.</div>';
+                        area.insertAdjacentElement('beforebegin', hintSq);
+                    }
+                }
+            } else {
+                addLog('No race condition triggered. Try again (timing varies).');
+            }
+        }
+    </script>
+</body>
+
+</html>

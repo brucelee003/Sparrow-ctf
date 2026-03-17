@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Easy Backup — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Beginner</a></li>
+                <li><a href="../../intermediate/index.html">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Beginner</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Easy Backup</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-beginner">🟢 Beginner</span>
+                <span class="badge badge-purple">50 pts</span>
+                <span class="badge badge-info">Exposed Backup File</span>
+            </div>
+            <h1 class="challenge-title">💾 Easy <span>Backup</span></h1>
+            <p class="challenge-subtitle">B-03 &nbsp;·&nbsp; /beginner/easy-backup</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                A NovaCorp developer edited <code>config.php</code> directly on the production server using the
+                <code>nano</code> text editor. Nano silently creates a backup copy named <code>config.php~</code>
+                in the same directory — a standard Unix text-editor behavior. That backup file contains
+                the original config including database credentials and a secret token. It's sitting there,
+                world-readable, waiting to be fetched.
+            </p>
+        </div>
+
+        <div class="endpoints-section">
+            <div class="section-label">// Endpoints</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>URL</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>GET</td>
+                            <td><code>config.php</code></td>
+                            <td>Normal config (redacted output)</td>
+                        </tr>
+                        <tr>
+                            <td>GET</td>
+                            <td><code>config.php~</code></td>
+                            <td>Nano backup file — contains credentials + flag</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="vuln-area">
+            <div class="vuln-area-header">
+                <span class="vuln-area-title">📁 File Browser — /beginner/easy-backup/</span>
+            </div>
+            <div class="vuln-area-body">
+                <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;">
+                    Try accessing these files directly in your browser address bar:
+                </p>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <a href="config.php" class="btn btn-ghost btn-sm"
+                        style="justify-content:flex-start;font-family:var(--font-mono);">
+                        📄 config.php
+                    </a>
+                    <a href="config.php~" class="btn btn-ghost btn-sm"
+                        style="justify-content:flex-start;font-family:var(--font-mono);" onclick="onBackupOpen()">
+                        📄 config.php~ &nbsp;<span style="color:var(--yellow);font-size:0.75rem;">(backup file)</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="steps">
+            <div class="section-label">// Steps</div>
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <div class="step-title">Notice the config.php file is accessible</div>
+                    <div class="step-detail">Open config.php — it shows a redacted/empty response</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <div class="step-title">Try the backup filename convention</div>
+                    <div class="step-detail">Append <code>~</code> to the URL: <code>config.php~</code></div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <div class="step-title">Read the backup file contents</div>
+                    <div class="step-detail">The backup contains unredacted config including the flag</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            <code>nano</code>, <code>vi</code>, and other editors create backup files with specific suffixes. Common
+            ones: <code>~</code> (nano), <code>.bak</code>, <code>.old</code>, <code>.orig</code>.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Back to Beginner</a> &nbsp;·&nbsp;
+            <a href="../id-in-url/index.html">Next Challenge →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('b03', 'FLAG{backup_file_exposed}');
+    </script>
+</body>
+
+</html>

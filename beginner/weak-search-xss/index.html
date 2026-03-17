@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weak Search XSS — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Beginner</a></li>
+                <li><a href="../../intermediate/index.html">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Beginner</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Weak Search XSS</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-beginner">🟢 Beginner</span>
+                <span class="badge badge-purple">50 pts</span>
+                <span class="badge badge-info">Reflected XSS</span>
+            </div>
+            <h1 class="challenge-title">⚡ Weak Search <span>XSS</span></h1>
+            <p class="challenge-subtitle">B-06 &nbsp;·&nbsp; /beginner/weak-search-xss</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's product search takes your query and reflects it directly back into the page:
+                <em>"Results for: [your input]"</em>. No encoding, no sanitization.
+                Whatever you type goes straight into the HTML. A classic reflected XSS scenario.
+                Craft an input that causes the page to execute a script, and the system will reward you with a flag.
+            </p>
+        </div>
+
+        <div class="endpoints-section">
+            <div class="section-label">// Endpoints</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>URL</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>GET</td>
+                            <td><code>/beginner/weak-search-xss/?q=widget</code></td>
+                            <td>Search results page — reflects ?q= in DOM</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Search UI -->
+        <div class="vuln-area">
+            <div class="vuln-area-header">
+                <span class="vuln-area-title">🔍 NovaCorp Product Search</span>
+            </div>
+            <div class="vuln-area-body">
+                <div class="flex gap-8 mb-16">
+                    <input type="text" class="form-input" id="search-input" placeholder="Search products..." value="" />
+                    <button class="btn btn-primary" onclick="doSearch()">Search</button>
+                </div>
+                <div id="search-results">
+                    <div style="color:var(--text-muted);font-size:0.85rem;">Enter a search term above…</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Try a standard XSS probe: <code>&lt;script&gt;alert(1)&lt;/script&gt;</code>.
+            The page reflects your query without escaping it first.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Back to Beginner</a> &nbsp;·&nbsp;
+            <a href="../open-directory/index.html">Next Challenge →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('b06', 'FLAG{reflected_xss_search}');
+
+        // Simulated products
+        const products = ['Widget A', 'Widget B', 'Gadget Pro', 'NovaCorp Cloud License', 'SaaS Bundle'];
+
+        function doSearch() {
+            const q = document.getElementById('search-input').value;
+            const resultsEl = document.getElementById('search-results');
+
+            // Detect XSS payload
+            const xssPattern = /<script|<img|<svg|onerror|onload|javascript:/i;
+            if (xssPattern.test(q)) {
+                // "Execute" the XSS — show discovery
+                resultsEl.innerHTML = `
+        <div class="alert alert-warning mb-12">⚠️ The page would have executed: <code>${q.substring(0, 40)}...</code></div>
+        <div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:8px;">
+          In a real browser without Content-Security-Policy, this script would execute.
+          The app reflects your input raw:
+        </div>
+        <div class="code-block mb-12">
+          <div class="code-block-header">Reflected HTML (dangerous):</div>
+          <div class="code-block-body" style="color:var(--red);">&lt;p&gt;Results for: ${q.replace(/</g, '&lt;').replace(/>/g, '&gt;')}&lt;/p&gt;</div>
+        </div>
+        <div class="alert alert-success">🎉 XSS vulnerability confirmed! FLAG{reflected_xss_search} has been recovered. Submit it below.</div>`;
+                return;
+            }
+
+            // Normal search
+            const matches = products.filter(p => p.toLowerCase().includes(q.toLowerCase()));
+            if (q === '') {
+                resultsEl.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;">Enter a search term above…</div>';
+                return;
+            }
+            if (matches.length === 0) {
+                resultsEl.innerHTML = `<div style="color:var(--text-muted);">No results for: <strong>${q}</strong></div>`;
+            } else {
+                resultsEl.innerHTML = `
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px;">Results for: <strong style="color:var(--text-primary);">${q}</strong></div>
+        ${matches.map(p => `<div class="card" style="padding:12px 16px;margin-bottom:8px;">${p}</div>`).join('')}`;
+            }
+        }
+
+        // Load from URL param
+        const q = new URLSearchParams(location.search).get('q');
+        if (q) { document.getElementById('search-input').value = q; doSearch(); }
+    </script>
+</body>
+
+</html>

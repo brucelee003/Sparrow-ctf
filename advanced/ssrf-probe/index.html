@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SSRF Probe — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Advanced</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">SSRF Probe</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-advanced">🔴 Advanced</span>
+                <span class="badge badge-purple">300 pts</span>
+                <span class="badge badge-info">SSRF</span>
+            </div>
+            <h1 class="challenge-title">🌐 SSRF <span>Probe</span></h1>
+            <p class="challenge-subtitle">A-01 &nbsp;·&nbsp; /advanced/ssrf-probe</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's "URL Preview" feature fetches a user-supplied URL on the server side and renders
+                a preview. The server sits inside the internal network and can reach services that aren't exposed
+                to the internet — like the metadata service (<code>http://169.254.169.254/</code>) or
+                internal APIs (<code>http://internal.novacorp.local/</code>).
+                Make the server fetch an internal resource.
+            </p>
+        </div>
+
+        <div class="endpoints-section">
+            <div class="section-label">// Internal Targets (server-side reachable)</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>URL</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>http://169.254.169.254/latest/meta-data/</code></td>
+                            <td>AWS Instance Metadata — contains IAM credentials</td>
+                        </tr>
+                        <tr>
+                            <td><code>http://internal.novacorp.local/</code></td>
+                            <td>Internal admin API — returns flag</td>
+                        </tr>
+                        <tr>
+                            <td><code>http://localhost:8080/admin</code></td>
+                            <td>Internal admin service on localhost</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="vuln-area">
+            <div class="vuln-area-header"><span class="vuln-area-title">🔗 URL Preview Service</span></div>
+            <div class="vuln-area-body">
+                <div class="form-group mb-12">
+                    <label class="form-label">URL to preview</label>
+                    <input type="text" class="form-input" id="url-input"
+                        placeholder="https://example.com or http://169.254.169.254/..." />
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="fetchPreview()">Fetch Preview →</button>
+                <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn btn-ghost btn-sm" onclick="setUrl('https://example.com')">example.com</button>
+                    <button class="btn btn-ghost btn-sm"
+                        onclick="setUrl('http://169.254.169.254/latest/meta-data/')">169.254.169.254</button>
+                    <button class="btn btn-ghost btn-sm"
+                        onclick="setUrl('http://internal.novacorp.local/')">internal.novacorp.local</button>
+                    <button class="btn btn-ghost btn-sm"
+                        onclick="setUrl('http://localhost:8080/admin')">localhost:8080/admin</button>
+                </div>
+                <div id="preview-result" style="margin-top:20px;"></div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            The server fetches the URL you provide. Try internal addresses:
+            <code>http://169.254.169.254/</code> (AWS metadata) or <code>http://internal.novacorp.local/</code>.
+            These are unreachable from the internet but accessible from the server's internal network.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Advanced</a> &nbsp;·&nbsp;
+            <a href="../blind-sqli/index.html">Next →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('a01', 'FLAG{ssrf_internal_access}');
+
+        function setUrl(url) { document.getElementById('url-input').value = url; }
+
+        function fetchPreview() {
+            const url = document.getElementById('url-input').value.trim();
+            const result = document.getElementById('preview-result');
+            if (!url) return;
+
+            // Check if it's an internal/SSRF target
+            const ssrfPatterns = [
+                '169.254.169.254', 'internal.novacorp.local', 'localhost:8080',
+                '127.0.0.1', '0.0.0.0', '::1', 'metadata.google.internal',
+                '192.168.', '10.', '172.16.'
+            ];
+            const isSSRF = ssrfPatterns.some(p => url.includes(p));
+
+            if (isSSRF) {
+                let resp = '';
+                if (url.includes('169.254.169.254')) {
+                    resp = `ami-id\nami-launch-index\nblock-device-mapping/\nhostname\niam/\n  security-credentials/\n    NovaCorp-EC2-Role/\n      AccessKeyId: AKIA...EXAMPLE\n      SecretAccessKey: wJalrXUt...\n      Token: AQoDYXdzEJ...\npublic-hostname\npublic-ipv4\n\n# Flag: FLAG{ssrf_metadata_leak}`;
+                } else if (url.includes('internal.novacorp.local')) {
+                    resp = `HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\n  "service": "NovaCorp Internal Admin API",\n  "version": "1.0",\n  "endpoints": ["/users", "/flags", "/config"],\n  "flag": "FLAG{ssrf_internal_access}"\n}`;
+                } else if (url.includes('localhost:8080')) {
+                    resp = `HTTP/1.1 200 OK\n\n<html><body>\n  <h1>NovaCorp Admin (localhost only)</h1>\n  <p>Secret: FLAG{ssrf_internal_access}</p>\n</body></html>`;
+                }
+
+                result.innerHTML = `
+      <div class="alert alert-danger mb-12">🚨 SSRF! Server fetched internal resource: <code>${url}</code></div>
+      <div class="terminal mb-12">
+        <div class="terminal-header"><span class="t-dot r"></span><span class="t-dot y"></span><span class="t-dot g"></span>
+          <span class="terminal-label">Server-side response from: ${url}</span></div>
+        <div class="terminal-body">
+          ${resp.split('\n').map(l => `<div class="t-line">${l.replace(/FLAG\{[^}]+\}/g, m => `<span class="t-flag">${m}</span>`)}</div>`).join('')}
+        </div>
+      </div>
+      <div class="flag-section">
+        <div class="flag-section-header">🚩 SSRF Confirmed</div>
+        <div class="flag-section-body">
+          <div class="flag-reveal">🚩 FLAG{ssrf_internal_access}</div>
+        </div>
+      </div>`;
+
+                // Discovery hint
+                if (!CTF.isSolved('a01')) {
+                    const area = document.getElementById('submission-area');
+                    if (!document.querySelector('.discovery-alert')) {
+                        const hintDiv = document.createElement('div');
+                        hintDiv.className = 'animate-in discovery-alert';
+                        hintDiv.style.marginTop = '20px';
+                        hintDiv.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> INTERNAL RESOURCE ACCESSED. Copy the flag and submit below.</div>';
+                        area.insertAdjacentElement('beforebegin', hintDiv);
+                    }
+                }
+            } else {
+                result.innerHTML = `
+      <div class="terminal">
+        <div class="terminal-header"><span class="t-dot r"></span><span class="t-dot y"></span><span class="t-dot g"></span>
+          <span class="terminal-label">Preview: ${url}</span></div>
+        <div class="terminal-body">
+          <div class="t-line">Fetching: ${url}…</div>
+          <div class="t-line">HTTP/1.1 200 OK</div>
+          <div class="t-line">Content-Type: text/html</div>
+          <div class="t-line">&nbsp;</div>
+          <div class="t-line">[External site content displayed here]</div>
+          <div class="t-line">&nbsp;</div>
+          <div class="t-line" style="color:var(--text-muted);">← This is a public URL. Try an internal IP address!</div>
+        </div>
+      </div>`;
+            }
+        }
+    </script>
+</body>
+
+</html>

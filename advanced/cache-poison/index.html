@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cache Poisoning — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Advanced</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Cache Poison</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-advanced">🔴 Advanced</span>
+                <span class="badge badge-purple">300 pts</span>
+                <span class="badge badge-info">Cache Poisoning</span>
+            </div>
+            <h1 class="challenge-title">☠️ Cache <span>Poison</span></h1>
+            <p class="challenge-subtitle">A-06 &nbsp;·&nbsp; /advanced/cache-poison</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's CDN caches responses based on the URL path. However, the application reflects the
+                <code>X-Forwarded-Host</code> header into the response (to build absolute URLs for SEO).
+                The CDN doesn't strip this header before caching — so if you inject a malicious host,
+                the cached response now contains a poisoned URL pointing to your server.
+                Every subsequent user who receives the cached page is affected.
+            </p>
+        </div>
+
+        <div class="tabs mt-24">
+            <button class="tab-btn active" onclick="switchTab('request')">1. Craft Request</button>
+            <button class="tab-btn" onclick="switchTab('cache')">2. Poison Cache</button>
+            <button class="tab-btn" onclick="switchTab('victim')">3. Victim Effect</button>
+        </div>
+
+        <div class="tab-pane active" id="tab-request">
+            <div class="vuln-area">
+                <div class="vuln-area-header"><span class="vuln-area-title">HTTP Request Builder</span></div>
+                <div class="vuln-area-body">
+                    <div class="section-label" style="margin-bottom:8px;">HTTP Headers</div>
+                    <div class="terminal mb-16">
+                        <div class="terminal-header"><span class="t-dot r"></span><span class="t-dot y"></span><span
+                                class="t-dot g"></span>
+                            <span class="terminal-label">Custom Request</span>
+                        </div>
+                        <div class="terminal-body">
+                            <div class="t-line">GET /home HTTP/1.1</div>
+                            <div class="t-line">Host: novacorp.com</div>
+                            <div class="t-line" style="display:flex;align-items:center;gap:8px;">
+                                <span>X-Forwarded-Host: </span>
+                                <input type="text" id="xfh-input" value="attacker.com"
+                                    style="background:transparent;border:1px solid var(--border);color:var(--green);font-family:var(--font-mono);font-size:0.8rem;padding:2px 6px;border-radius:4px;width:200px;" />
+                            </div>
+                            <div class="t-line">Cache-Control: no-cache</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="sendPoisonRequest()">Send Poisoning Request
+                        →</button>
+                    <div id="req-result" style="margin-top:12px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane" id="tab-cache">
+            <div id="cache-content">
+                <p style="color:var(--text-muted);">Send the poisoning request first.</p>
+            </div>
+        </div>
+
+        <div class="tab-pane" id="tab-victim">
+            <div id="victim-content">
+                <p style="color:var(--text-muted);">Poison the cache first, then see what victims get.</p>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Set <code>X-Forwarded-Host</code> to your attacker domain (e.g. <code>attacker.com</code>).
+            The server reflects it into cached HTML. All subsequent visitors receive the poisoned response.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Advanced</a> &nbsp;·&nbsp;
+            <a href="../deserialization/index.html">Next →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('a07', 'FLAG{web_cache_poisoning}');
+
+        let poisonedHost = null;
+
+        function sendPoisonRequest() {
+            const xfh = document.getElementById('xfh-input').value.trim();
+            const result = document.getElementById('req-result');
+
+            const isExternal = xfh && xfh !== 'novacorp.com' && !xfh.includes('novacorp.com');
+
+            const poisonedHtml = `&lt;!DOCTYPE html&gt;
+&lt;html&gt;&lt;head&gt;
+  &lt;link rel="canonical" href="https://${xfh}/home"&gt;
+  &lt;script src="https://${xfh}/js/analytics.js"&gt;&lt;/script&gt;
+&lt;/head&gt;&lt;body&gt;...&lt;/body&gt;&lt;/html&gt;`;
+
+            result.innerHTML = `
+    <div class="alert ${isExternal ? 'alert-danger' : 'alert-info'} mb-12">
+      ${isExternal ? `🚨 Malicious host reflected! Response now cached with host: ${xfh}`
+                    : `⚠️ Host ${xfh} seems safe. Try an external domain.`}
+    </div>
+    <div class="code-block mb-12">
+      <div class="code-block-header">Server Response (will be cached):</div>
+      <div class="code-block-body" style="font-size:0.75rem;">${poisonedHtml}</div>
+    </div>`;
+
+            if (isExternal) {
+                poisonedHost = xfh;
+                document.getElementById('cache-content').innerHTML = `
+      <div class="alert alert-danger mb-12">🚨 Cache POISONED! CDN stored response with X-Forwarded-Host: ${xfh}</div>
+      <div class="terminal">
+        <div class="terminal-header"><span class="t-dot r"></span><span class="t-dot y"></span><span class="t-dot g"></span>
+          <span class="terminal-label">CDN Cache Entry — /home</span></div>
+        <div class="terminal-body">
+          <div class="t-line" style="color:var(--green);">cache-key: novacorp.com/home</div>
+          <div class="t-line" style="color:var(--magenta);">cached-at: ${new Date().toUTCString()}</div>
+          <div class="t-line" style="color:var(--magenta);">canonical: https://${xfh}/home  ← POISONED</div>
+          <div class="t-line" style="color:var(--magenta);">script-src: https://${xfh}/js/analytics.js  ← POISONED</div>
+          <div class="t-line">ttl: 300s</div>
+        </div>
+      </div>
+      <button class="btn btn-primary mt-12 btn-sm" onclick="switchTab('victim')">→ See Victim Effect</button>`;
+
+                document.getElementById('victim-content').innerHTML = `
+      <div class="alert alert-danger mb-12">
+        🚨 Victim visits novacorp.com/home — receives the CACHED poisoned page!
+      </div>
+      <div class="terminal mb-12">
+        <div class="terminal-header"><span class="t-dot r"></span><span class="t-dot y"></span><span class="t-dot g"></span>
+          <span class="terminal-label">Victim Browser — Received Page</span></div>
+        <div class="terminal-body">
+          <div class="t-line">← loads script from: https://${xfh}/js/analytics.js</div>
+          <div class="t-line" style="color:var(--magenta);">← attacker controls ${xfh}</div>
+          <div class="t-line" style="color:var(--magenta);">← script executes in victim's context</div>
+          <div class="t-line" style="color:var(--magenta);">← cookies/session stolen</div>
+        </div>
+      </div>
+      <div class="flag-section">
+        <div class="flag-section-header">🚩 Cache Poisoning Confirmed</div>
+        <div class="flag-section-body">
+          <div class="flag-reveal">🚩 FLAG{web_cache_poisoning}</div>
+        </div>
+      </div>`;
+
+                // Discovery hint
+                if (!CTF.isSolved('a07')) {
+                    const area = document.getElementById('submission-area');
+                    if (!document.querySelector('.discovery-alert')) {
+                        const hintDiv = document.createElement('div');
+                        hintDiv.className = 'animate-in discovery-alert';
+                        hintDiv.style.marginTop = '20px';
+                        hintDiv.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> CACHE POISONING SUCCESSFUL. CDN serving malicious host. Copy the flag and submit below.</div>';
+                        area.insertAdjacentElement('beforebegin', hintDiv);
+                    }
+                }
+                switchTab('cache');
+            }
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+        }
+    </script>
+</body>
+
+</html>

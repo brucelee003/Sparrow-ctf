@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Intermediate Challenges — WebPWN CTF</title>
+    <link rel="stylesheet" href="../styles/main.css" />
+    <style>
+        .level-hero {
+            padding: 80px 0 48px;
+            border-bottom: 2px solid var(--charcoal);
+            position: relative;
+        }
+
+        .challenges-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+            padding: 48px 0;
+        }
+
+        .ccard {
+            background: rgba(10, 12, 16, 0.6);
+            border: 1px solid var(--border);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: var(--trans);
+            position: relative;
+            text-decoration: none;
+            color: inherit;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+        }
+
+        .ccard:hover {
+            border-color: var(--yellow);
+            background: rgba(10, 12, 16, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .ccard-num {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+        }
+
+        .ccard-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .ccard-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            flex: 1;
+            font-family: var(--font-mono);
+        }
+
+        .ccard-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .ccard-link {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--yellow);
+            font-family: var(--font-mono);
+            letter-spacing: 0.1em;
+        }
+
+        .solved-indicator {
+            color: var(--cyan);
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+            display: none;
+            text-shadow: var(--cyan-glow);
+        }
+
+        .ccard.is-solved .solved-indicator {
+            display: inline;
+        }
+
+        .ccard.is-solved {
+            border-color: var(--cyan);
+            background: var(--cyan-dim);
+        }
+
+        @media (max-width: 800px) {
+            .challenges-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../beginner/index.html">Beginner</a></li>
+                <li><a href="index.html" class="active">Intermediate</a></li>
+                <li><a href="../advanced/index.html">Advanced</a></li>
+                <li><a href="../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="level-hero">
+        <div class="container level-hero-content">
+            <span class="badge badge-intermediate" style="margin-bottom:16px;border-radius:0;">NODE_TYPE: INTERMEDIATE
+                // 150_PTS</span>
+            <h1 style="font-size:2.5rem;font-weight:700;margin-bottom:12px;letter-spacing:0.1em;color:var(--yellow);">
+                Intermediate_Nodes</h1>
+            <p style="color:var(--text-muted);max-width:560px;">SQL injection, stored XSS, cookie manipulation, CSRF,
+                and file upload tricks. Requires understanding HTTP and browser developer tools.</p>
+            <div class="flex gap-16 mt-24" style="flex-wrap:wrap;">
+                <div style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-muted);">
+                    <span class="text-yellow">8</span> challenges &nbsp;·&nbsp;
+                    <span class="text-yellow">1,200</span> total pts &nbsp;·&nbsp;
+                    Solved: <span class="text-yellow" id="lvl-solved">0</span>/8
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="challenges-grid">
+
+            <a class="ccard" href="union-login/index.html" id="card-i01" data-id="i01">
+                <div class="ccard-num">I-01 · SQL Injection</div>
+                <div class="ccard-title">💉 Union Login</div>
+                <div class="ccard-desc">The login form builds its SQL query with raw string concatenation. A single
+                    quote can rewrite the entire query. Bypass authentication.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-intermediate">150 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="stored-xss-comment/index.html" id="card-i02" data-id="i02">
+                <div class="ccard-num">I-02 · Stored XSS</div>
+                <div class="ccard-title">💾 Stored XSS Comment</div>
+                <div class="ccard-desc">The blog comment box stores whatever you submit without escaping. Plant a script
+                    that runs when the admin reviews comments.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-intermediate">150 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="cookie-tampering/index.html" id="card-i03" data-id="i03">
+                <div class="ccard-num">I-03 · Cookie Manipulation</div>
+                <div class="ccard-title">🍪 Cookie Tampering</div>
+                <div class="ccard-desc">After login, you receive a role=user cookie. The server blindly trusts it. Open
+                    DevTools and change who you are.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-intermediate">150 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="insecure-reset/index.html" id="card-i04" data-id="i04">
+                <div class="ccard-num">I-04 · IDOR / Insecure Reset</div>
+                <div class="ccard-title">🔄 Insecure Reset Link</div>
+                <div class="ccard-desc">Password reset uses ?user=alice in the URL. No ownership check. Change the
+                    parameter and reset someone important.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-intermediate">150 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="csrf-form/index.html" id="card-i05" data-id="i05">
+                <div class="ccard-num">I-05 · CSRF</div>
+                <div class="ccard-title">📋 CSRF Form</div>
+                <div class="ccard-desc">A privileged action endpoint accepts POST with no CSRF token. A hidden form can
+                    trigger it silently. Make it happen.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-intermediate">150 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="jwt-weak/index.html" id="card-i06" data-id="i06">
+                <div class="ccard-num">I-06 · JWT Forgery</div>
+                <div class="ccard-title">🔏 JWT Weak Secret</div>
+                <div class="ccard-desc">The API signs JWTs with HS256 and the key is just <code>secret</code>. Decode
+                    your token,
+                    elevate your role to admin, re-sign it, and gain access.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-intermediate">150 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="open-redirect/index.html" id="card-i07" data-id="i07">
+                <div class="ccard-num">I-07 · Open Redirect</div>
+                <div class="ccard-title">↪️ Open Redirect</div>
+                <div class="ccard-desc">The login page uses an unvalidated <code>?next=</code> parameter. Point it at an
+                    external host and the server happily complies.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-intermediate">150 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="path-traversal-lite/index.html" id="card-i08" data-id="i08">
+                <div class="ccard-num">I-08 · Path Traversal</div>
+                <div class="ccard-title">🗂️ Path Traversal Lite</div>
+                <div class="ccard-desc">The document viewer loads files by name from <code>?file=</code>. It doesn't
+                    sanitise
+                    <code>../</code> sequences — walk out of the docs directory.
+                </div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-intermediate">150 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <span class="footer-logo">WebPWN.ctf</span> — Intermediate Level &nbsp;·&nbsp;
+            <a href="../beginner/index.html">← Beginner</a> &nbsp;·&nbsp;
+            <a href="../advanced/index.html">Advanced →</a> &nbsp;·&nbsp;
+            <a href="../admin/index.html" style="color:var(--text-muted); opacity:0.5;">[ ADMIN_TERMINAL ]</a>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        window.renderScoreboard = function() {
+            window.updateCTFUI();
+            const solved = CTF.getSolved();
+            let count = 0;
+            ['i01', 'i02', 'i03', 'i04', 'i05', 'i06', 'i07', 'i08'].forEach(id => {
+                if (solved[id]) { document.getElementById('card-' + id)?.classList.add('is-solved'); count++; }
+            });
+            document.getElementById('lvl-solved').textContent = count;
+        };
+        window.renderScoreboard();
+    </script>
+</body>
+
+</html>

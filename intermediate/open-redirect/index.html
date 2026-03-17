@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open Redirect — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Intermediate</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Open Redirect</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-intermediate">🟡 Intermediate</span>
+                <span class="badge badge-purple">150 pts</span>
+                <span class="badge badge-info">Open Redirect</span>
+            </div>
+            <h1 class="challenge-title">↪️ Open <span>Redirect</span></h1>
+            <p class="challenge-subtitle">I-07 &nbsp;·&nbsp; /intermediate/open-redirect</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's login page redirects users post-authentication using a <code>?next=</code> URL parameter.
+                The server doesn't validate whether the target is on the NovaCorp domain — it redirects anywhere.
+                This can be used for phishing: send a victim a link like
+                <code>novacorp.com/login?next=https://evil.com</code> and they'll be sent to the attacker's site
+                after logging in (or just by visiting the URL, in this simulation).
+            </p>
+        </div>
+
+        <div class="endpoints-section">
+            <div class="section-label">// Endpoint</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>URL</th>
+                            <th>Effect</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>?next=/dashboard</code></td>
+                            <td>Safe internal redirect</td>
+                        </tr>
+                        <tr>
+                            <td><code>?next=https://evil.com</code></td>
+                            <td>Open redirect to external site (vulnerable)</td>
+                        </tr>
+                        <tr>
+                            <td><code>?next=https://attacker.novacorp-evil.com</code></td>
+                            <td>Bypass with subdomain confusion</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="vuln-area">
+            <div class="vuln-area-header"><span class="vuln-area-title">↪️ Redirect Simulator</span></div>
+            <div class="vuln-area-body">
+                <div class="form-group mb-16">
+                    <label class="form-label">Try a redirect target (edit the <code>?next=</code> value):</label>
+                    <input type="text" class="form-input" id="next-input"
+                        placeholder="e.g. https://evil.com or /dashboard" />
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="simulateRedirect()">Simulate Redirect →</button>
+                <div style="margin-top:12px;font-size:0.8rem;color:var(--text-muted);">Current URL would be: <code
+                        id="url-preview">?next=</code></div>
+                <div id="redirect-result" style="margin-top:16px;"></div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Try <code>?next=https://evil.com</code> to trigger the open redirect.
+            The server should only allow redirects to its own domain — but it doesn't validate the host.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Intermediate</a> &nbsp;·&nbsp;
+            <a href="../path-traversal-lite/index.html">Next →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('i07', 'FLAG{open_redirect_abuse}');
+
+        document.getElementById('next-input').addEventListener('input', function () {
+            document.getElementById('url-preview').textContent = `?next=${this.value}`;
+        });
+
+        // Load from URL param on page load
+        const initialNext = new URLSearchParams(location.search).get('next');
+        if (initialNext) { document.getElementById('next-input').value = initialNext; }
+
+        function simulateRedirect() {
+            const next = document.getElementById('next-input').value.trim();
+            const result = document.getElementById('redirect-result');
+
+            let isExternal = false;
+            try {
+                const url = new URL(next, location.href);
+                isExternal = url.hostname !== location.hostname && url.hostname !== '';
+            } catch (e) { }
+
+            if (isExternal) {
+                result.innerHTML = `
+      <div class="alert alert-danger mb-12">🚨 Open Redirect detected! Redirecting to external host…</div>
+      <div class="terminal mb-12">
+        <div class="terminal-header"><span class="t-dot r"></span><span class="t-dot y"></span><span class="t-dot g"></span>
+          <span class="terminal-label">HTTP Response</span></div>
+        <div class="terminal-body">
+          <div class="t-line">HTTP/1.1 302 Found</div>
+          <div class="t-line" style="color:var(--magenta);">Location: ${next}</div>
+          <div class="t-line">&nbsp;</div>
+          <div class="t-line">← Victim browser follows redirect to attacker's site</div>
+          <div class="t-line">← Session cookies may be leaked via Referer header</div>
+        </div>
+      </div>
+      <div class="flag-section">
+        <div class="flag-section-header">🚩 Open Redirect Confirmed</div>
+        <div class="flag-section-body">
+          <p style="color:var(--text-muted);font-size:0.85rem;">You triggered an unvalidated open redirect to an external domain.</p>
+          <div class="flag-reveal">🚩 FLAG{open_redirect_abuse}</div>
+        </div>
+      </div>`;
+
+                // Discovery hint
+                if (!CTF.isSolved('i07')) {
+                    const area = document.getElementById('submission-area');
+                    if (!document.querySelector('.discovery-alert')) {
+                        const hintSq = document.createElement('div');
+                        hintSq.className = 'animate-in discovery-alert';
+                        hintSq.style.marginTop = '20px';
+                        hintSq.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> REDIRECT VULNERABILITY CONFIRMED. Copy the flag and submit below.</div>';
+                        area.insertAdjacentElement('beforebegin', hintSq);
+                    }
+                }
+            } else if (next.startsWith('/') || next === '') {
+                result.innerHTML = `<div class="alert alert-success">✓ Safe internal redirect to: <code>${next || '/'}</code>. (Try an external URL!)</div>`;
+            } else {
+                result.innerHTML = `<div class="alert alert-warning">Ambiguous redirect target: <code>${next}</code>. Try a full URL like <code>https://evil.com</code></div>`;
+            }
+        }
+    </script>
+</body>
+
+</html>

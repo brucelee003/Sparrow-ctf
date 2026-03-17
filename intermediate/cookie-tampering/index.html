@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cookie Tampering — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Intermediate</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Cookie Tampering</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-intermediate">🟡 Intermediate</span>
+                <span class="badge badge-purple">150 pts</span>
+                <span class="badge badge-info">Broken Access Control</span>
+            </div>
+            <h1 class="challenge-title">🍪 Cookie <span>Tampering</span></h1>
+            <p class="challenge-subtitle">I-03 &nbsp;·&nbsp; /intermediate/cookie-tampering</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                After login, NovaCorp sets a cookie: <code>role=user</code>. The server reads this cookie on
+                every request to determine permissions — without any signature or verification.
+                Whoever controls the cookie, controls the role. Change it to <code>role=admin</code> using
+                DevTools → Application → Cookies, then access the admin panel.
+            </p>
+        </div>
+
+        <div id="user-view">
+            <div class="steps">
+                <div class="section-label">// Steps</div>
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <div class="step-title">Log in as a normal user</div>
+                        <div class="step-detail">Click the button below — it sets a <code>role=user</code> cookie in
+                            your browser</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Open DevTools → Application → Cookies</div>
+                        <div class="step-detail">Find the <code>nova_role</code> cookie for this page</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Edit the cookie value</div>
+                        <div class="step-detail">Change value from <code>user</code> to <code>admin</code></div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <div class="step-title">Click "Load Admin Panel"</div>
+                        <div class="step-detail">The page reads the cookie and grants access if <code>role=admin</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="vuln-area mt-24">
+                <div class="vuln-area-header"><span class="vuln-area-title">🍪 Session Cookie Manager</span></div>
+                <div class="vuln-area-body">
+                    <div style="margin-bottom:16px;">
+                        <button class="btn btn-ghost" onclick="doLogin()">1. Login as User (set cookie)</button>
+                    </div>
+                    <div class="terminal mb-16">
+                        <div class="terminal-header"><span class="t-dot r"></span><span class="t-dot y"></span><span
+                                class="t-dot g"></span>
+                            <span class="terminal-label">Current Cookies</span>
+                        </div>
+                        <div class="terminal-body" id="cookie-display">
+                            <div class="t-line t-cmd">document.cookie</div>
+                            <div class="t-line" id="cookie-output">(login first to see the cookie)</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="loadAdminPanel()">2. Load Admin Panel →</button>
+                    <div id="access-result" style="margin-top:12px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="admin-panel" style="display:none;">
+            <div class="flag-section">
+                <div class="flag-section-header">🚩 Admin Panel — Access Granted</div>
+                <div class="flag-section-body">
+                    <p style="color:var(--text-muted);font-size:0.85rem;">
+                        You modified the <code>nova_role=admin</code> cookie and gained admin access.
+                        The server never verified the cookie's authenticity — no HMAC, no signing, nothing.
+                    </p>
+                    <div class="flag-reveal">🚩 FLAG{cookie_role_tampered}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            After clicking "Login as User", open <strong>DevTools → Application → Cookies</strong>.
+            Find <code>nova_role</code> and double-click the value column to edit it.
+            Change <code>user</code> → <code>admin</code>, then click "Load Admin Panel".
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Intermediate</a> &nbsp;·&nbsp;
+            <a href="../insecure-reset/index.html">Next →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('i03', 'FLAG{cookie_role_tampered}');
+
+        function getCookie(name) {
+            const val = document.cookie.split(';').find(c => c.trim().startsWith(name + '='));
+            return val ? val.split('=')[1].trim() : null;
+        }
+
+        function doLogin() {
+            document.cookie = 'nova_role=user; path=/';
+            document.getElementById('cookie-output').innerHTML =
+                '<span style="color:var(--magenta);">nova_role=user</span>  <span style="color:var(--text-muted);">(modify this in DevTools!</span>)';
+            document.getElementById('access-result').innerHTML =
+                '<div class="alert alert-info mt-8">✓ Logged in as user. Cookie <code>nova_role=user</code> is now set. Edit it in DevTools!</div>';
+        }
+
+        function loadAdminPanel() {
+            const role = getCookie('nova_role');
+            document.getElementById('cookie-output').innerHTML =
+                `<span style="color:var(--${role === 'admin' ? 'purple' : 'magenta'});">nova_role=${role || '(not set)'}</span>`;
+
+            if (role === 'admin') {
+                document.getElementById('user-view').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+
+                // Discovery hint
+                if (!CTF.isSolved('i03')) {
+                    const area = document.getElementById('submission-area');
+                    if (!document.querySelector('.discovery-alert')) {
+                        const hintSq = document.createElement('div');
+                        hintSq.className = 'animate-in discovery-alert';
+                        hintSq.style.marginTop = '20px';
+                        hintSq.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> PRIVILEGE ESCALATION SUCCESSFUL. Copy the flag from the admin panel and submit.</div>';
+                        area.insertAdjacentElement('beforebegin', hintSq);
+                    }
+                }
+            } else {
+                document.getElementById('access-result').innerHTML =
+                    `<div class="alert alert-danger">Access denied. Cookie says <code>nova_role=${role || '(not set)'}</code>. Need <code>admin</code>.</div>`;
+            }
+        }
+
+        if (CTF.isSolved('i03')) {
+            document.getElementById('user-view').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>

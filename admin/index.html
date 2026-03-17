@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — WebPWN.ctf</title>
+    <link rel="stylesheet" href="../styles/main.css">
+    <style>
+        /* Admin Specific Styles */
+        :root {
+            --admin-red: #ff3e3e;
+            --admin-glow: 0 0 15px rgba(255, 62, 62, 0.3);
+        }
+
+        body {
+            background-color: #0d1117;
+            overflow-x: hidden;
+        }
+
+        #admin-auth {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at center, rgba(79, 209, 197, 0.05) 0%, transparent 70%);
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--charcoal);
+            border: 1px solid var(--border);
+            padding: 40px;
+            position: relative;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+        }
+
+        .auth-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 40px;
+            background: var(--cyan);
+        }
+
+        .auth-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            letter-spacing: 0.1em;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .auth-title span {
+            color: var(--cyan);
+        }
+
+        #admin-panel {
+            display: none;
+            padding: 100px 0;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 32px;
+        }
+
+        .profile-panel,
+        .data-panel,
+        .list-panel {
+            background: var(--charcoal);
+            border: 1px solid var(--border);
+            padding: 24px;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+        }
+
+        .data-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+        }
+
+        .admin-table th {
+            text-align: left;
+            color: var(--cyan);
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .admin-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+        }
+
+        .clickable-row:hover {
+            background: rgba(79, 209, 197, 0.05);
+            cursor: pointer;
+        }
+
+        .status-tag {
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .status-solved {
+            color: var(--green);
+            background: rgba(0, 255, 102, 0.1);
+        }
+
+        .status-pending {
+            color: var(--silver);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .big-stat {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+            margin: 8px 0;
+        }
+
+        .reset-zone {
+            margin-top: 40px;
+            padding: 20px;
+            border: 1px dashed var(--admin-red);
+            background: rgba(255, 62, 62, 0.03);
+        }
+
+        .breadcrumb {
+            margin-bottom: 24px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .breadcrumb:hover {
+            color: var(--cyan);
+        }
+
+        /* Tabs */
+        .admin-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 32px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .admin-tab {
+            padding: 12px 24px;
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: var(--trans);
+            background: rgba(10, 12, 16, 0.4);
+            border: 1px solid var(--border);
+            border-bottom: none;
+        }
+
+        .admin-tab:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .admin-tab.active {
+            color: var(--cyan);
+            background: var(--charcoal);
+            border-bottom: 2px solid var(--cyan);
+            position: relative;
+            top: 1px;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html">Live_Nodes</a></li>
+                <li><a href="index.html" class="active">Admin_Terminal</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- ── Auth Screen ── -->
+    <div id="admin-auth">
+        <div class="auth-card">
+            <div class="auth-title">ADMIN_<span>LOGIN</span></div>
+            <div class="id-fields">
+                <div class="id-input-group">
+                    <label class="id-label">> ACCESS_ID</label>
+                    <input type="text" id="admin-user" class="id-input" placeholder="sparrow" autocomplete="off">
+                </div>
+                <div class="id-input-group">
+                    <label class="id-label">> ACCESS_KEY</label>
+                    <input type="password" id="admin-pass" class="id-input" placeholder="••••••••" autocomplete="off">
+                </div>
+                <button id="login-btn" class="id-btn" onclick="checkAuth()">INITIATE_SESSION</button>
+                <div id="auth-err" style="color:var(--admin-red); font-size: 0.8rem; margin-top: 16px; display: none;">
+                    Invalid credentials. Connection refused.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Dashboard Screen ── -->
+    <div id="admin-panel">
+        <div class="container" style="max-width: 1200px;">
+            <div class="section-header">
+                <span class="section-eyebrow">Terminal_Access // Root</span>
+                <h1 class="section-title">ADMIN_TERMINAL</h1>
+            </div>
+
+            <!-- Dashboard Navigation Tabs -->
+            <div class="admin-tabs" id="dashboard-tabs">
+                <div class="admin-tab active" onclick="switchMainTab('active')">ACTIVE_OPERATOR</div>
+                <div class="admin-tab" onclick="switchMainTab('log')">OPERATOR_LOG</div>
+            </div>
+
+            <!-- View 1: Active User List -->
+            <div id="view-active" class="view-section active">
+                <div class="list-panel">
+                    <div class="data-header">
+                        <div class="auth-title" style="margin-bottom:0">SESSION_<span>MONITOR</span></div>
+                        <div class="text-muted" style="font-size: 0.8rem;">REAL_TIME: STATUS_READY</div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Number</th>
+                                    <th>Completed</th>
+                                    <th>Session_ID</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="active-list-body">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 2: Full Operator Log -->
+            <div id="view-log" class="view-section">
+                <div class="list-panel">
+                    <div class="data-header">
+                        <div class="auth-title" style="margin-bottom:0">HISTORICAL_<span>ENTRIES</span></div>
+                        <div class="text-muted" style="font-size: 0.8rem;">DB_VERSION: 1.0.4</div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Number</th>
+                                    <th>Total_Completed</th>
+                                    <th>First_Seen</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="log-list-body">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 3: Drill-down Profile (Hidden by default, triggered by click) -->
+            <div id="view-profile" class="view-section">
+                <div class="breadcrumb" onclick="returnToTab()">← BACK_TO_LIST</div>
+                <div class="dashboard-grid">
+                    <div class="profile-panel">
+                        <div class="id-label" style="color:var(--cyan); margin-bottom: 20px;">[ OPERATOR_PROFILE ]</div>
+                        <div class="mb-24">
+                            <div class="section-eyebrow">OPERATOR_ALIAS</div>
+                            <div class="big-stat" id="op-name">---</div>
+                        </div>
+                        <div class="mb-24">
+                            <div class="section-eyebrow">CONTACT_FREQUENCY</div>
+                            <div class="text-primary" id="op-phone"
+                                style="font-family:var(--font-mono); font-size: 1.1rem;">---</div>
+                        </div>
+                        <div class="mb-24">
+                            <div class="section-eyebrow">FIRST_INITIALIZED</div>
+                            <div class="text-muted" id="op-joined" style="font-size: 0.85rem;">---</div>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="mt-24">
+                            <div class="section-eyebrow">MISSION_COMPLETION</div>
+                            <div class="big-stat" id="op-rate">0 / 24</div>
+                            <div class="stat-bar" style="height: 4px;">
+                                <div id="op-bar" class="stat-bar-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="reset-zone">
+                            <div class="section-eyebrow" style="color:var(--admin-red)">DANGER_ZONE</div>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin: 8px 0 16px;">Irreversibly
+                                wipe session and user records.</p>
+                            <button class="btn btn-outline btn-sm"
+                                style="color:var(--admin-red); border-color:var(--admin-red); width: 100%; justify-content:center;"
+                                onclick="resetSystem()">PURGE_ALL_DATA</button>
+                        </div>
+                    </div>
+
+                    <div class="data-panel">
+                        <div class="data-header">
+                            <div class="auth-title" style="margin-bottom:0">MISSION_<span>STATUS</span></div>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Node_ID</th>
+                                        <th>Name</th>
+                                        <th>Tier</th>
+                                        <th>Status</th>
+                                        <th>Captured_Flag</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="matrix-body">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/app.js"></script>
+    <script>
+        const nodes = [
+            { id: 'b01', name: 'Source Inspection', tier: 'Beginner' },
+            { id: 'b02', name: 'Robots Spy', tier: 'Beginner' },
+            { id: 'b03', name: 'Hidden Assets', tier: 'Beginner' },
+            { id: 'b04', name: 'Parameter Tampering', tier: 'Beginner' },
+            { id: 'b05', name: 'Direct Object Reference', tier: 'Beginner' },
+            { id: 'b06', name: 'User Enum', tier: 'Beginner' },
+            { id: 'b07', name: 'Weak Search XSS', tier: 'Beginner' },
+            { id: 'b08', name: 'Credential Stuffing', tier: 'Beginner' },
+            { id: 'i01', name: 'Cookie Tampering', tier: 'Intermediate' },
+            { id: 'i02', name: 'Union Login', tier: 'Intermediate' },
+            { id: 'i03', name: 'Path Traversal', tier: 'Intermediate' },
+            { id: 'i04', name: 'Stored XSS', tier: 'Intermediate' },
+            { id: 'i05', name: 'JWT Weak Secret', tier: 'Intermediate' },
+            { id: 'i06', name: 'CSRF Form', tier: 'Intermediate' },
+            { id: 'i07', name: 'Open Redirect', tier: 'Intermediate' },
+            { id: 'i08', name: 'Insecure Reset', tier: 'Intermediate' },
+            { id: 'a01', name: 'Blind SQLi', tier: 'Advanced' },
+            { id: 'a02', name: 'JWT Algo Confusion', tier: 'Advanced' },
+            { id: 'a03', name: 'SSTI Probe', tier: 'Advanced' },
+            { id: 'a04', name: 'Business Logic Bypass', tier: 'Advanced' },
+            { id: 'a05', name: 'SSRF Reader', tier: 'Advanced' },
+            { id: 'a06', name: 'XXE Internal', tier: 'Advanced' },
+            { id: 'a07', name: 'CORS Misconfig', tier: 'Advanced' },
+            { id: 'a08', name: 'Chained Exploit', tier: 'Advanced' }
+        ];
+
+        let currentActiveTab = 'active';
+
+        window.renderScoreboard = function() {
+            if (document.getElementById('admin-panel').style.display === 'block') {
+                if (!document.getElementById('view-profile').classList.contains('active')) {
+                    switchMainTab(currentActiveTab);
+                }
+            }
+        };
+
+        function checkAuth() {
+            const user = (document.getElementById('admin-user').value || '').trim();
+            const pass = (document.getElementById('admin-pass').value || '').trim();
+
+            if (user === 'sparrow' && pass === 'sparrow_root') {
+                document.getElementById('admin-auth').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                switchMainTab('active');
+            } else {
+                const err = document.getElementById('auth-err');
+                err.style.display = 'block';
+                const btn = document.getElementById('login-btn');
+                btn.textContent = 'ACCESS_DENIED';
+                btn.style.borderColor = '#ff3e3e';
+                setTimeout(() => {
+                    err.style.display = 'none';
+                    btn.textContent = 'INITIATE_SESSION';
+                    btn.style.borderColor = 'var(--cyan)';
+                }, 2000);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') checkAuth();
+        });
+
+        function switchMainTab(tab) {
+            currentActiveTab = tab;
+            document.getElementById('dashboard-tabs').style.display = 'flex';
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+
+            if (tab === 'active') {
+                document.querySelector('.admin-tab:nth-child(1)').classList.add('active');
+                document.getElementById('view-active').classList.add('active');
+                renderActiveList();
+            } else {
+                document.querySelector('.admin-tab:nth-child(2)').classList.add('active');
+                document.getElementById('view-log').classList.add('active');
+                renderOperatorLog();
+            }
+        }
+
+        function returnToTab() {
+            switchMainTab(currentActiveTab);
+        }
+
+        function renderActiveList() {
+            const activeUser = JSON.parse(localStorage.getItem('webpwn_user') || '{}');
+            const solved = JSON.parse(localStorage.getItem('webpwn_solved') || '{}');
+            const totalSolved = Object.keys(solved).length;
+            const tbody = document.getElementById('active-list-body');
+            tbody.innerHTML = '';
+
+            if (activeUser.name) {
+                const tr = document.createElement('tr');
+                tr.className = 'clickable-row';
+                tr.onclick = () => renderProfile(activeUser);
+                tr.innerHTML = `
+                    <td style="color:var(--cyan); font-weight:700;">${activeUser.name}</td>
+                    <td>${activeUser.num}</td>
+                    <td style="color:var(--text-primary)">${totalSolved} / 24</td>
+                    <td style="font-size: 0.7rem; font-family:var(--font-mono)">${Math.random().toString(16).slice(2, 10).toUpperCase()}</td>
+                    <td style="font-size: 0.7rem; color:var(--cyan)">SCAN_PROFILE_LINK [>]</td>
+                `;
+                tbody.appendChild(tr);
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color:var(--text-muted);">NULL_OPERATOR // NO ACTIVE SESSION DETECTED.</td></tr>';
+            }
+        }
+
+        function renderOperatorLog() {
+            const operators = JSON.parse(localStorage.getItem('webpwn_operators') || '[]');
+            const activeUser = JSON.parse(localStorage.getItem('webpwn_user') || '{}');
+            const solved = JSON.parse(localStorage.getItem('webpwn_solved') || '{}');
+            const tbody = document.getElementById('log-list-body');
+            tbody.innerHTML = '';
+
+            if (operators.length > 0) {
+                [...operators].reverse().forEach(op => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'clickable-row';
+                    tr.onclick = () => renderProfile(op);
+
+                    const isActive = activeUser.name === op.name;
+                    const completion = isActive ? `${Object.keys(solved).length} / 24` : '---';
+
+                    tr.innerHTML = `
+                        <td style="color:var(--text-primary); font-weight:700;">${op.name}</td>
+                        <td>${op.num}</td>
+                        <td>${completion}</td>
+                        <td>${new Date(op.joined).toLocaleDateString()}</td>
+                        <td>${isActive ? '<span class="status-tag status-solved">ACTIVE</span>' : '<span class="status-tag status-pending">INACTIVE</span>'}</td>
+                        <td>
+                            <div style="display:flex; gap:12px; align-items:center;">
+                                <span style="font-size: 0.7rem; color:var(--cyan)">LOAD [>]</span>
+                                <button onclick="deleteOperator('${op.name}', event)" style="background:none; border:1px solid var(--admin-red); color:var(--admin-red); padding:2px 8px; font-family:var(--font-mono); font-size:0.65rem; cursor:pointer;">PURGE</button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--text-muted);">LOG_EMPTY // NO HISTORICAL RECORDS FOUND.</td></tr>';
+            }
+        }
+
+        function deleteOperator(name, e) {
+            if (e) e.stopPropagation();
+            if (confirm(`PURGE_RECORD: Permanently delete operator '${name}' from historical logs?`)) {
+                let operators = JSON.parse(localStorage.getItem('webpwn_operators') || '[]');
+                operators = operators.filter(op => op.name !== name);
+                localStorage.setItem('webpwn_operators', JSON.stringify(operators));
+                if (window.syncToFirebase) window.syncToFirebase();
+                renderOperatorLog();
+            }
+        }
+
+        function renderProfile(user) {
+            document.getElementById('dashboard-tabs').style.display = 'none';
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-profile').classList.add('active');
+
+            const activeUser = JSON.parse(localStorage.getItem('webpwn_user') || '{}');
+            const solved = JSON.parse(localStorage.getItem('webpwn_solved') || '{}');
+
+            // Only show detailed flags for the current active user in this MVP
+            const opSolved = (activeUser.name === user.name) ? solved : {};
+
+            document.getElementById('op-name').textContent = user.name.toUpperCase();
+            document.getElementById('op-phone').textContent = user.num || '---';
+            document.getElementById('op-joined').textContent = user.joined ? new Date(user.joined).toLocaleString() : '---';
+
+            const total = Object.keys(opSolved).length;
+            document.getElementById('op-rate').textContent = `${total} / 24`;
+            document.getElementById('op-bar').style.width = `${(total / 24) * 100}%`;
+
+            const tbody = document.getElementById('matrix-body');
+            tbody.innerHTML = '';
+
+            nodes.forEach(node => {
+                const tr = document.createElement('tr');
+                const solveData = opSolved[node.id];
+                const statusHtml = solveData
+                    ? `<span class="status-tag status-solved">COMPLETED</span>`
+                    : `<span class="status-tag status-pending">PENDING</span>`;
+
+                tr.innerHTML = `
+                    <td>${node.id.toUpperCase()}</td>
+                    <td style="color:var(--text-primary)">${node.name}</td>
+                    <td>${node.tier}</td>
+                    <td>${statusHtml}</td>
+                    <td style="font-family:var(--font-mono); color:var(--cyan)">${solveData ? solveData.flag : '---'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function resetSystem() {
+            if (confirm("CRITICAL_WIPE: This will erase all operator logs and mission progress. Proceed?")) {
+                localStorage.clear();
+                if (window.syncToFirebase) window.syncToFirebase();
+                window.location.reload();
+            }
+        }
+    </script>
+</body>
+
+</html>

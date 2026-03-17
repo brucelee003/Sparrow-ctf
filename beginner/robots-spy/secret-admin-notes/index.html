@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Robots Spy — Secret Admin Notes</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Beginner</a></li>
+                <li><a href="../../intermediate/index.html">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm" style="padding-top:48px;">
+        <div class="terminal">
+            <div class="terminal-header"><span class="t-dot r"></span><span class="t-dot y"></span><span
+                    class="t-dot g"></span>
+                <span class="terminal-label">novacorp-internal — /secret-admin-notes/</span>
+            </div>
+            <div class="terminal-body">
+                <div class="t-line">NovaCorp Internal Admin Notes</div>
+                <div class="t-line">═══════════════════════════════════</div>
+                <div class="t-line">&nbsp;</div>
+                <div class="t-line t-cmd">cat notes.txt</div>
+                <div class="t-line">&nbsp;</div>
+                <div class="t-line">TODO: Change default admin password (still admin:admin lol)</div>
+                <div class="t-line">TODO: Remove the config.php~ backup file from production</div>
+                <div class="t-line">TODO: Disable directory listing on /uploads/</div>
+                <div class="t-line">NOTE: Internal API key =&gt; sk_live_NOVACORP_2024_INTERNAL</div>
+                <div class="t-line">&nbsp;</div>
+                <div class="t-line">🚩 Secret token: <span class="t-flag">FLAG{robots_txt_leak}</span></div>
+            </div>
+        </div>
+
+        <div class="flag-section mt-24">
+            <div class="flag-section-header">🚩 Flag Captured — B-01</div>
+            <div class="flag-section-body">
+                <p style="color:var(--text-muted);font-size:0.85rem;">
+                    You found this page by reading <code>robots.txt</code> and navigating to a disallowed path.
+                    In the real world, robots.txt is public — never put sensitive paths there!
+                </p>
+                <div class="flag-reveal">🚩 FLAG{robots_txt_leak}</div>
+            </div>
+        </div>
+
+        <div style="margin-top:24px;">
+            <a href="index.html" class="btn btn-ghost btn-sm">← Back to Challenge</a>
+            <a href="../index.html" class="btn btn-outline btn-sm" style="margin-left:8px;">Level Overview</a>
+        </div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Back to Beginner</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.markSolved('b01', 'FLAG{robots_txt_leak}');
+    </script>
+</body>
+
+</html>

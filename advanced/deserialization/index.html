@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deserialization Attack — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Advanced</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Deserialization Attack</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-advanced">🔴 Advanced</span>
+                <span class="badge badge-purple">300 pts</span>
+                <span class="badge badge-info">Insecure Deserialization</span>
+            </div>
+            <h1 class="challenge-title">💀 Deserialization <span>Attack</span></h1>
+            <p class="challenge-subtitle">A-07 &nbsp;·&nbsp; /advanced/deserialization</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's session token is a Base64-encoded serialized JSON object:
+                <code>{"username":"alice","role":"user","exp":...}</code>.
+                The server deserializes this token without signature verification.
+                Decode the token, modify the role to <code>admin</code>, re-encode to Base64, and send it.
+                The server will deserialize your crafted payload and grant admin access.
+            </p>
+        </div>
+
+        <div class="tabs mt-24">
+            <button class="tab-btn active" onclick="switchTab('decode')">1. Decode Session</button>
+            <button class="tab-btn" onclick="switchTab('modify')">2. Modify Payload</button>
+            <button class="tab-btn" onclick="switchTab('submit')">3. Submit</button>
+        </div>
+
+        <div class="tab-pane active" id="tab-decode">
+            <div class="vuln-area">
+                <div class="vuln-area-header"><span class="vuln-area-title">Session Token Decoder</span></div>
+                <div class="vuln-area-body">
+                    <div class="section-label" style="margin-bottom:8px;">Your session token (from cookie):</div>
+                    <div class="code-block mb-12">
+                        <div class="code-block-header">Cookie: session=...</div>
+                        <div class="code-block-body" style="word-break:break-all;font-size:0.75rem;" id="raw-token">
+                        </div>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="decodeToken()">🔍 Decode →</button>
+                    <div id="decode-result" style="margin-top:16px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane" id="tab-modify">
+            <div class="vuln-area">
+                <div class="vuln-area-header"><span class="vuln-area-title">Payload Editor</span></div>
+                <div class="vuln-area-body">
+                    <div class="form-group mb-12">
+                        <label class="form-label">Edit the JSON object</label>
+                        <textarea class="form-input" id="modify-input" rows="6"
+                            style="font-family:var(--font-mono);font-size:0.8rem;"></textarea>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="encodeAndCopy()">Encode to Base64 →</button>
+                    <div id="encoded-result" style="margin-top:16px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane" id="tab-submit">
+            <div class="vuln-area">
+                <div class="vuln-area-header"><span class="vuln-area-title">Submit Crafted Token</span></div>
+                <div class="vuln-area-body">
+                    <div class="form-group mb-12">
+                        <label class="form-label">Session Token (Base64)</label>
+                        <textarea class="form-input" id="submit-token" placeholder="Paste your crafted Base64 token..."
+                            rows="3" style="font-family:var(--font-mono);font-size:0.8rem;"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="submitToken()">Send to /api/session/verify →</button>
+                    <div id="submit-result" style="margin-top:16px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Decode the Base64 token → find <code>"role":"user"</code> → change it to <code>"role":"admin"</code>
+            → re-encode to Base64 → submit. The server trusts the serialized object without any signature!
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Advanced</a> &nbsp;·&nbsp;
+            <a href="../ssti-template/index.html">Next →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('a08', 'FLAG{insecure_deserialization}');
+
+        const SESSION_OBJ = { username: 'alice', role: 'user', exp: 9999999999, uid: 42 };
+        const USER_TOKEN = btoa(JSON.stringify(SESSION_OBJ));
+
+        document.getElementById('raw-token').textContent = USER_TOKEN;
+
+        function decodeToken() {
+            try {
+                const decoded = JSON.parse(atob(USER_TOKEN));
+                document.getElementById('decode-result').innerHTML = `
+      <div class="code-block">
+        <div class="code-block-header">Decoded JSON:</div>
+        <div class="code-block-body"><pre>${JSON.stringify(decoded, null, 2)}</pre></div>
+      </div>
+      <div class="alert alert-warning mt-12">
+        ⚠️ Notice: <code>"role":"user"</code>. No signature! You can edit this freely.
+      </div>
+      <button class="btn btn-ghost btn-sm mt-8" onclick="document.getElementById('modify-input').value=JSON.stringify(${JSON.stringify(decoded)},null,2);switchTab('modify');">→ Edit in Modifier</button>`;
+                document.getElementById('modify-input').value = JSON.stringify(decoded, null, 2);
+            } catch (e) {
+                document.getElementById('decode-result').innerHTML = `<div class="alert alert-danger">Decode error: ${e.message}</div>`;
+            }
+        }
+
+        function encodeAndCopy() {
+            try {
+                const obj = JSON.parse(document.getElementById('modify-input').value);
+                const encoded = btoa(JSON.stringify(obj));
+                document.getElementById('encoded-result').innerHTML = `
+      <div class="code-block">
+        <div class="code-block-header">Encoded Token:</div>
+        <div class="code-block-body" style="word-break:break-all;font-size:0.75rem;">${encoded}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm mt-8" onclick="document.getElementById('submit-token').value='${encoded}';switchTab('submit');">→ Send to Submit tab</button>`;
+            } catch (e) {
+                document.getElementById('encoded-result').innerHTML = `<div class="alert alert-danger">JSON error: ${e.message}</div>`;
+            }
+        }
+
+        function submitToken() {
+            const token = document.getElementById('submit-token').value.trim();
+            const result = document.getElementById('submit-result');
+            try {
+                const decoded = JSON.parse(atob(token));
+                if (decoded.role === 'admin') {
+                    result.innerHTML = `
+        <div class="alert alert-success mb-12">✓ Session accepted! Role = admin. Access granted.</div>
+        <div class="flag-section">
+          <div class="flag-section-header">🚩 Insecure Deserialization — Admin Access</div>
+          <div class="flag-section-body">
+            <div class="flag-reveal">🚩 FLAG{insecure_deserialization}</div>
+          </div>
+        </div>`;
+
+                    // Discovery hint
+                    if (!CTF.isSolved('a08')) {
+                        const area = document.getElementById('submission-area');
+                        if (!document.querySelector('.discovery-alert')) {
+                            const hintDiv = document.createElement('div');
+                            hintDiv.className = 'animate-in discovery-alert';
+                            hintDiv.style.marginTop = '20px';
+                            hintDiv.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> SESSION PRIVILEGES ESCALATED. Role=admin accepted. Copy the flag and submit below.</div>';
+                            area.insertAdjacentElement('beforebegin', hintDiv);
+                        }
+                    }
+                } else if (decoded.role === 'user') {
+                    result.innerHTML = `<div class="alert alert-warning">Role is still <code>user</code>. Modify the JSON payload to set <code>role: "admin"</code>.</div>`;
+                } else {
+                    result.innerHTML = `<div class="alert alert-info">Session accepted. Role: <code>${decoded.role}</code>. Need <code>admin</code>.</div>`;
+                }
+            } catch (e) {
+                result.innerHTML = `<div class="alert alert-danger">Invalid Base64/JSON: ${e.message}</div>`;
+            }
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+        }
+    </script>
+</body>
+
+</html>

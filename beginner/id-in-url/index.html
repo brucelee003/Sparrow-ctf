@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ID in URL — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Beginner</a></li>
+                <li><a href="../../intermediate/index.html">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Beginner</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">ID in URL</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-beginner">🟢 Beginner</span>
+                <span class="badge badge-purple">50 pts</span>
+                <span class="badge badge-info">IDOR</span>
+            </div>
+            <h1 class="challenge-title">🔢 ID in <span>URL</span></h1>
+            <p class="challenge-subtitle">B-04 &nbsp;·&nbsp; /beginner/id-in-url</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's user profile page loads data based on a numeric ID in the URL query string:
+                <code>?id=1</code>. There's no server-side check to verify that you're actually allowed to
+                view a given ID. You've been given a normal user account (ID 1). The admin account is ID 2.
+                Can you access the admin's private profile data?
+            </p>
+        </div>
+
+        <div class="endpoints-section">
+            <div class="section-label">// Endpoints</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>URL</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>GET</td>
+                            <td><code>index.html?id=1</code></td>
+                            <td>Your profile (normal user)</td>
+                        </tr>
+                        <tr>
+                            <td>GET</td>
+                            <td><code>index.html?id=2</code></td>
+                            <td>Admin profile — contains flag</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Simulated profile viewer -->
+        <div class="vuln-area">
+            <div class="vuln-area-header">
+                <span class="vuln-area-title">👤 User Profile Viewer</span>
+                <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);">?id=<span
+                        id="current-id">1</span></span>
+            </div>
+            <div class="vuln-area-body">
+                <div id="profile-display"></div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Look at the URL bar. The <code>?id=</code> parameter controls which profile loads. Try changing the number.
+            This is called an <strong>Insecure Direct Object Reference (IDOR)</strong>.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Back to Beginner</a> &nbsp;·&nbsp;
+            <a href="../default-login/index.html">Next Challenge →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('b04', 'FLAG{idor_id_param}');
+
+        const profiles = {
+            '1': {
+                name: 'Alex Johnson',
+                email: 'alex.johnson@novacorp.com',
+                role: 'Developer',
+                secret: null,
+                avatar: '👨‍💻'
+            },
+            '2': {
+                name: 'Admin User',
+                email: 'admin@novacorp.com',
+                role: 'Administrator',
+                secret: 'FLAG{idor_id_param}',
+                avatar: '👑'
+            }
+        };
+
+        function loadProfile() {
+            const params = new URLSearchParams(location.search);
+            const id = params.get('id') || '1';
+            document.getElementById('current-id').textContent = id;
+
+            const profile = profiles[id];
+            const display = document.getElementById('profile-display');
+
+            if (!profile) {
+                display.innerHTML = `<div class="alert alert-danger">User ID ${id} not found.</div>`;
+                return;
+            }
+
+            let secretRow = '';
+            if (profile.secret) {
+                secretRow = `
+      <tr style="background:rgba(188,19,254,0.05);">
+        <td style="color:var(--text-muted);">Secret Note</td>
+        <td style="color:var(--purple);font-family:var(--font-mono);font-weight:700;">${profile.secret}</td>
+      </tr>`;
+                // Discovery hint
+                const area = document.getElementById('submission-area');
+                if (!CTF.isSolved('b04')) {
+                    const msg = document.createElement('div');
+                    msg.className = 'animate-in';
+                    msg.style.color = 'var(--purple)';
+                    msg.style.marginTop = '20px';
+                    msg.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> ADMIN DATA ACCESSED. Copy the flag from the profile and submit.</div>';
+                    if (!document.querySelector('.discovery-alert')) {
+                        msg.classList.add('discovery-alert');
+                        area.insertAdjacentElement('beforebegin', msg);
+                    }
+                }
+            }
+
+            display.innerHTML = `
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:3rem;">${profile.avatar}</div>
+      <div style="font-size:1.2rem;font-weight:700;margin-top:8px;">${profile.name}</div>
+      <div style="font-size:0.82rem;color:var(--text-muted);">${profile.role}</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--text-muted);">User ID</td><td style="font-family:var(--font-mono);">${id}</td></tr>
+          <tr><td style="color:var(--text-muted);">Name</td><td>${profile.name}</td></tr>
+          <tr><td style="color:var(--text-muted);">Email</td><td style="font-family:var(--font-mono);">${profile.email}</td></tr>
+          <tr><td style="color:var(--text-muted);">Role</td><td><span class="badge ${id === '2' ? 'badge-advanced' : 'badge-info'}">${profile.role}</span></td></tr>
+          ${secretRow}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+      ${Object.keys(profiles).map(pid =>
+                `<a href="?id=${pid}" class="btn btn-ghost btn-sm" style="${pid === id ? 'border-color:var(--purple);color:var(--purple);' : ''}">View ID ${pid}</a>`
+            ).join('')}
+    </div>`;
+        }
+
+        loadProfile();
+    </script>
+</body>
+
+</html>

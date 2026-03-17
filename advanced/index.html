@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advanced Challenges — WebPWN CTF</title>
+    <link rel="stylesheet" href="../styles/main.css" />
+    <style>
+        .level-hero {
+            padding: 80px 0 48px;
+            border-bottom: 2px solid var(--charcoal);
+            position: relative;
+        }
+
+        .challenges-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+            padding: 48px 0;
+        }
+
+        .ccard {
+            background: rgba(10, 12, 16, 0.6);
+            border: 1px solid var(--border);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: var(--trans);
+            position: relative;
+            text-decoration: none;
+            color: inherit;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+        }
+
+        .ccard:hover {
+            border-color: var(--red);
+            background: rgba(10, 12, 16, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .ccard-num {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+        }
+
+        .ccard-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .ccard-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            flex: 1;
+            font-family: var(--font-mono);
+        }
+
+        .ccard-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .ccard-link {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--red);
+            font-family: var(--font-mono);
+            letter-spacing: 0.1em;
+        }
+
+        .solved-indicator {
+            color: var(--cyan);
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+            display: none;
+            text-shadow: var(--cyan-glow);
+        }
+
+        .ccard.is-solved .solved-indicator {
+            display: inline;
+        }
+
+        .ccard.is-solved {
+            border-color: var(--cyan);
+            background: var(--cyan-dim);
+        }
+
+        @media (max-width: 800px) {
+            .challenges-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../beginner/index.html">Beginner</a></li>
+                <li><a href="../intermediate/index.html">Intermediate</a></li>
+                <li><a href="index.html" class="active">Advanced</a></li>
+                <li><a href="../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="level-hero">
+        <div class="container level-hero-content">
+            <span class="badge badge-advanced" style="margin-bottom:16px;border-radius:0;">NODE_TYPE: ADVANCED //
+                300_PTS</span>
+            <h1 style="font-size:2.5rem;font-weight:700;margin-bottom:12px;letter-spacing:0.1em;color:var(--red);">
+                Advanced_Nodes</h1>
+            <p style="color:var(--text-muted);max-width:560px;">Blind SQLi, JWT algorithm confusion, SSTI, business
+                logic flaws, CORS, open redirect chains, and a fully chained multi-step exploit. These require
+                methodical, layered thinking.</p>
+            <div class="flex gap-16 mt-24" style="flex-wrap:wrap;">
+                <div style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-muted);">
+                    <span class="text-red">8</span> challenges &nbsp;·&nbsp;
+                    <span class="text-red">2,400</span> total pts &nbsp;·&nbsp;
+                    Solved: <span class="text-red" id="lvl-solved">0</span>/8
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="challenges-grid">
+
+            <a class="ccard" href="ssrf-probe/index.html" id="card-a01" data-id="a01">
+                <div class="ccard-num">A-01 · SSRF</div>
+                <div class="ccard-title">🌐 SSRF Probe</div>
+                <div class="ccard-desc">The URL preview service fetches any URL server-side. Point it at AWS metadata
+                    or internal APIs — resources unreachable from the internet.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-advanced">300 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="blind-sqli/index.html" id="card-a02" data-id="a02">
+                <div class="ccard-num">A-02 · Blind Boolean SQLi</div>
+                <div class="ccard-title">�️ Blind SQLi</div>
+                <div class="ccard-desc">No error messages. The API only says "found" or "not found." Craft boolean
+                    payloads to extract the admin hash one character at a time.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-advanced">300 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="xxe-reader/index.html" id="card-a03" data-id="a03">
+                <div class="ccard-num">A-03 · XXE Injection</div>
+                <div class="ccard-title">� XXE Reader</div>
+                <div class="ccard-desc">The XML import feature uses an insecure parser. Inject an external entity
+                    pointing to <code>file:///etc/passwd</code> and the server reads it for you.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-advanced">300 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="prototype-pollution/index.html" id="card-a04" data-id="a04">
+                <div class="ccard-num">A-04 · Prototype Pollution</div>
+                <div class="ccard-title">☣️ Prototype Pollution</div>
+                <div class="ccard-desc">A vulnerable <code>deepMerge()</code> lets you inject into
+                    <code>__proto__</code>.
+                    Pollute <code>Object.prototype.isAdmin</code> and bypass the admin check.
+                </div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-advanced">300 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="race-coupon/index.html" id="card-a05" data-id="a05">
+                <div class="ccard-num">A-05 · Race Condition</div>
+                <div class="ccard-title">⚡ Race Coupon</div>
+                <div class="ccard-desc">The one-use coupon has a non-atomic check-and-mark. Send five simultaneous
+                    redemption requests and watch the same coupon apply multiple times.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-advanced">300 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="cache-poison/index.html" id="card-a06" data-id="a06">
+                <div class="ccard-num">A-06 · Cache Poisoning</div>
+                <div class="ccard-title">☠️ Cache Poison</div>
+                <div class="ccard-desc">The CDN reflects the <code>X-Forwarded-Host</code> header into cached responses.
+                    Poison the cache so every visitor loads your script.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-advanced">300 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="deserialization/index.html" id="card-a07" data-id="a07">
+                <div class="ccard-num">A-07 · Insecure Deserialization</div>
+                <div class="ccard-title">💀 Deserialization Attack</div>
+                <div class="ccard-desc">The session token is a Base64-encoded JSON object. No signature. Decode it,
+                    change your role to <code>admin</code>, re-encode, and submit.</div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-advanced">300 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+            <a class="ccard" href="ssti-template/index.html" id="card-a08" data-id="a08">
+                <div class="ccard-num">A-08 · SSTI</div>
+                <div class="ccard-title">📌 SSTI Template</div>
+                <div class="ccard-desc">The email greeting renders user input through a template engine. Probe with
+                    <code>{{7*7}}</code>, then escalate to leak the server-side <code>flag</code> variable.
+                </div>
+                <div class="ccard-footer">
+                    <div class="flex gap-8 items-center"><span class="badge badge-advanced">300 pts</span><span
+                            class="solved-indicator">✓ Solved</span></div>
+                    <span class="ccard-link">Open →</span>
+                </div>
+            </a>
+
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <span class="footer-logo">WebPWN.ctf</span> — Advanced Level &nbsp;·&nbsp;
+            <a href="../intermediate/index.html">← Intermediate</a> &nbsp;·&nbsp;
+            <a href="../scoreboard/index.html">Scoreboard</a> &nbsp;·&nbsp;
+            <a href="../admin/index.html" style="color:var(--text-muted); opacity:0.5;">[ ADMIN_TERMINAL ]</a>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        window.renderScoreboard = function() {
+            window.updateCTFUI();
+            const solved = CTF.getSolved();
+            let count = 0;
+            ['a01', 'a02', 'a03', 'a04', 'a05', 'a06', 'a07', 'a08'].forEach(id => {
+                if (solved[id]) { document.getElementById('card-' + id)?.classList.add('is-solved'); count++; }
+            });
+            document.getElementById('lvl-solved').textContent = count;
+        };
+        window.renderScoreboard();
+    </script>
+</body>
+
+</html>

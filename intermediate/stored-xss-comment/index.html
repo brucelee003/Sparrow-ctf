@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stored XSS Comment — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Intermediate</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Stored XSS Comment</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-intermediate">🟡 Intermediate</span>
+                <span class="badge badge-purple">150 pts</span>
+                <span class="badge badge-info">Stored XSS</span>
+            </div>
+            <h1 class="challenge-title">💾 Stored XSS <span>Comment</span></h1>
+            <p class="challenge-subtitle">I-02 &nbsp;·&nbsp; /intermediate/stored-xss-comment</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's tech blog accepts public comments. The backend stores submissions directly without
+                any HTML encoding, then re-renders them on load. When the admin periodically reviews the comment
+                queue, any stored script executes in their browser context. You post — they get hit.
+                Submit a malicious comment, then use the "Admin View" to simulate what the admin sees.
+            </p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs mt-24">
+            <button class="tab-btn active" onclick="switchTab('blog')">📝 Blog (Post Comment)</button>
+            <button class="tab-btn" onclick="switchTab('admin')">👑 Admin View</button>
+        </div>
+
+        <!-- Blog tab -->
+        <div class="tab-pane active" id="tab-blog">
+            <div class="vuln-area">
+                <div class="vuln-area-header"><span class="vuln-area-title">📰 NovaCorp Tech Blog — Article
+                        Comments</span></div>
+                <div class="vuln-area-body">
+                    <div style="background:rgba(0,0,0,0.2);padding:16px;border-radius:var(--r-md);margin-bottom:20px;">
+                        <h3 style="font-size:1rem;margin-bottom:8px;">Why We Moved to the Cloud</h3>
+                        <p style="font-size:0.82rem;color:var(--text-muted);">Posted by @novacorp_dev · 3 days ago</p>
+                    </div>
+                    <div class="section-label" style="margin-bottom:12px;">Leave a Comment</div>
+                    <div class="form-group mb-12">
+                        <label class="form-label">Your Name</label>
+                        <input type="text" class="form-input" id="comment-name" placeholder="Anonymous" />
+                    </div>
+                    <div class="form-group mb-16">
+                        <label class="form-label">Comment</label>
+                        <textarea class="form-input" id="comment-body" placeholder="Write your comment..."></textarea>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="postComment()">Post Comment →</button>
+                    <div id="post-result" style="margin-top:12px;"></div>
+                    <div class="divider"></div>
+                    <div class="section-label" style="margin-bottom:12px;">Posted Comments</div>
+                    <div id="comment-list">
+                        <div class="card" style="padding:14px;margin-bottom:10px;">
+                            <span style="font-weight:600;font-size:0.85rem;">user_alex</span>
+                            <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">2024-11-19</span>
+                            <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:6px;">Great article!
+                                Really helpful for our migration.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin tab -->
+        <div class="tab-pane" id="tab-admin">
+            <div class="vuln-area">
+                <div class="vuln-area-header">
+                    <span class="vuln-area-title">👑 Admin Comment Review Queue</span>
+                    <button class="btn btn-sm btn-ghost" onclick="loadAdminView()">Refresh Admin View</button>
+                </div>
+                <div class="vuln-area-body">
+                    <div class="alert alert-warning mb-16">
+                        ⚠️ Admin context. Comments are rendered raw (innerHTML) without sanitization.
+                    </div>
+                    <div id="admin-comment-list">
+                        <p style="color:var(--text-muted);font-size:0.85rem;">Click "Refresh Admin View" to simulate the
+                            admin loading the comment queue.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Post a comment containing <code>&lt;script&gt;alert(1)&lt;/script&gt;</code>, then switch to the
+            <strong>Admin View</strong> tab.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Intermediate</a> &nbsp;·&nbsp;
+            <a href="../cookie-tampering/index.html">Next →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('i02', 'FLAG{stored_xss_comment}');
+
+        const STORAGE_KEY = 'xss_comments';
+
+        function getComments() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+            catch { return []; }
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+        }
+
+        function postComment() {
+            const name = document.getElementById('comment-name').value.trim() || 'Anonymous';
+            const body = document.getElementById('comment-body').value.trim();
+            if (!body) { document.getElementById('post-result').innerHTML = '<div class="alert alert-danger">Comment cannot be empty.</div>'; return; }
+
+            const comments = getComments();
+            comments.push({ name, body, date: new Date().toISOString().split('T')[0] });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
+            if (window.syncToFirebase) window.syncToFirebase();
+
+            // Also render in the "safe" view (escaped)
+            const safeBody = body.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            document.getElementById('comment-list').innerHTML += `
+    <div class="card" style="padding:14px;margin-bottom:10px;">
+      <span style="font-weight:600;font-size:0.85rem;">${name.replace(/</g, '&lt;')}</span>
+      <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">${new Date().toISOString().split('T')[0]}</span>
+      <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:6px;">${safeBody}</p>
+    </div>`;
+
+            document.getElementById('comment-body').value = '';
+            document.getElementById('post-result').innerHTML = '<div class="alert alert-success">✓ Comment stored! Switch to Admin View to simulate admin loading.</div>';
+        }
+
+        function loadAdminView() {
+            const comments = getComments();
+            const listEl = document.getElementById('admin-comment-list');
+            if (comments.length === 0) {
+                listEl.innerHTML = '<p style="color:var(--text-muted);">No comments to review.</p>';
+                return;
+            }
+
+            let hasXSS = false;
+            listEl.innerHTML = comments.map(c => {
+                if (/<script|<img|<svg|onerror|onload/i.test(c.body)) hasXSS = true;
+                return `<div class="card" style="padding:14px;margin-bottom:10px;">
+      <span style="font-weight:600;font-size:0.85rem;">${c.name}</span>
+      <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">${c.date}</span>
+      <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:6px;">${c.body}</div>
+    </div>`;
+            }).join('');
+
+            if (hasXSS) {
+                listEl.innerHTML += `<div class="alert alert-danger mt-12">🚨 XSS payload executed in admin context. Use the discovered access token below to submit.</div>`;
+                listEl.innerHTML += `<div class="flag-reveal mt-12">🚩 FLAG{stored_xss_comment}</div>`;
+
+                // Discovery hint for the component area
+                if (!CTF.isSolved('i02')) {
+                    const area = document.getElementById('submission-area');
+                    if (!document.querySelector('.discovery-alert')) {
+                        const hintSq = document.createElement('div');
+                        hintSq.className = 'animate-in discovery-alert';
+                        hintSq.style.marginTop = '20px';
+                        hintSq.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> ADMIN SESSION HIJACKED. Copy the flag from the admin view and submit.</div>';
+                        area.insertAdjacentElement('beforebegin', hintSq);
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

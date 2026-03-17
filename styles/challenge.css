@@ -1,0 +1,672 @@
+/* ====================================================
+   WebPWN CTF — HACKER THEME  |  challenge.css
+   ==================================================== */
+
+/* ─── Breadcrumb ─── */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    padding: 20px 0 0;
+    letter-spacing: 0.05em;
+}
+
+.breadcrumb::before {
+    content: '// ';
+    color: var(--text-muted);
+}
+
+.breadcrumb a {
+    color: var(--text-muted);
+    transition: var(--trans);
+}
+
+.breadcrumb a:hover {
+    color: var(--cyan);
+    text-shadow: var(--cyan-glow);
+}
+
+.breadcrumb-sep {
+    color: var(--text-muted);
+    opacity: 0.3;
+}
+
+.breadcrumb-current {
+    color: var(--cyan);
+}
+
+/* ─── Challenge Header ─── */
+.challenge-header {
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+}
+
+.challenge-header-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.challenge-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+    color: var(--text-primary);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.challenge-title span {
+    color: var(--text-muted);
+}
+
+.challenge-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 6px;
+    font-family: var(--font-mono);
+}
+
+/* ─── Scenario Panel ─── */
+.scenario-panel {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--cyan);
+    padding: 24px;
+    margin-bottom: 32px;
+    position: relative;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+}
+
+.scenario-panel::before {
+    content: 'MISSION_BRIEF.txt';
+    position: absolute;
+    top: -1px;
+    left: 12px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    background: var(--bg-primary);
+    padding: 0 6px;
+    transform: translateY(-50%);
+}
+
+/* ─── Flag Submission Area ─── */
+.submission-box {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    padding: 32px;
+    margin-top: 48px;
+    position: relative;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.submission-box::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 0%, var(--cyan-dim) 100%);
+    pointer-events: none;
+    opacity: 0.3;
+}
+
+.submission-label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 20px;
+    display: block;
+}
+
+.submission-form {
+    display: flex;
+    gap: 12px;
+}
+
+.submission-input {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border);
+    color: #fff;
+    font-family: var(--font-mono);
+    padding: 12px 18px;
+    font-size: 1rem;
+    outline: none;
+    transition: var(--trans);
+}
+
+.submission-input:focus {
+    border-color: var(--cyan);
+    box-shadow: var(--cyan-glow);
+}
+
+.submission-btn {
+    background: var(--purple);
+    color: #000;
+    border: none;
+    padding: 0 24px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--trans);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.submission-btn:hover {
+    background: var(--cyan);
+    box-shadow: var(--cyan-glow);
+    transform: none;
+}
+
+.submission-btn:active {
+    transform: translateY(0);
+}
+
+/* ─── Reveal Banner ─── */
+.solved-banner {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: var(--cyan-dim);
+    border: 1px solid var(--cyan);
+    padding: 24px;
+    margin-top: 40px;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+}
+
+.solved-banner-icon {
+    font-size: 2rem;
+}
+
+.scenario-panel-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--green);
+    margin-bottom: 8px;
+}
+
+.scenario-panel-label::before {
+    content: '# ';
+}
+
+.scenario-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.7;
+    font-family: var(--font-mono);
+}
+
+/* ─── Endpoints Table ─── */
+.endpoints-section {
+    margin-bottom: 28px;
+}
+
+.section-label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.section-label::before {
+    content: '> ';
+    color: var(--green);
+}
+
+/* ─── Vuln Area (the interactive part) ─── */
+.vuln-area {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    margin-bottom: 32px;
+    clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 0 100%);
+}
+
+.vuln-area-header {
+    background: rgba(0, 255, 0, 0.06);
+    border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.vuln-area-title {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
+}
+
+.vuln-area-title::before {
+    content: '[ ';
+}
+
+.vuln-area-title::after {
+    content: ' ]';
+}
+
+.vuln-area-body {
+    padding: 22px;
+}
+
+/* Simulated browser */
+.sim-browser {
+    background: rgba(0, 5, 0, 0.9);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.sim-browser-bar {
+    background: rgba(0, 255, 0, 0.04);
+    border-bottom: 1px solid var(--border);
+    padding: 7px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sim-browser-dots {
+    display: flex;
+    gap: 5px;
+}
+
+.sim-browser-dots span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: rgba(0, 255, 0, 0.2);
+    border: 1px solid rgba(0, 255, 0, 0.4);
+}
+
+.sim-url-bar {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 4px 10px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.sim-browser-content {
+    padding: 22px;
+}
+
+/* Simulated login form */
+.sim-login {
+    max-width: 380px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sim-login-title {
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 4px;
+    font-family: var(--font-display);
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+}
+
+/* ─── HTTP Response Box ─── */
+.http-response {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+    margin-top: 16px;
+}
+
+.http-response-header {
+    padding: 8px 14px;
+    background: rgba(0, 255, 0, 0.05);
+    border-bottom: 1px solid rgba(0, 255, 0, 0.12);
+    font-family: var(--font-mono);
+    font-size: 0.73rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.http-status-ok {
+    color: var(--green);
+    text-shadow: 0 0 6px rgba(0, 255, 0, 0.5);
+}
+
+.http-status-err {
+    color: var(--red);
+    text-shadow: 0 0 6px rgba(255, 0, 64, 0.5);
+}
+
+.http-response-body {
+    padding: 14px 18px;
+    font-family: var(--font-mono);
+    font-size: 0.83rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+}
+
+/* ─── Flag Reveal Section ─── */
+.flag-section {
+    background: rgba(0, 15, 0, 0.9);
+    border: 1px solid var(--green);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+    margin-top: 28px;
+    box-shadow: 0 0 24px rgba(0, 255, 0, 0.12);
+}
+
+.flag-section-header {
+    background: rgba(0, 255, 0, 0.08);
+    border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+    padding: 10px 18px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+}
+
+.flag-section-body {
+    padding: 18px 22px;
+}
+
+.flag-reveal {
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--cyan);
+    background: #000;
+    padding: 14px 18px;
+    border: 1px solid var(--cyan);
+    word-break: break-all;
+    letter-spacing: 0.1em;
+    box-shadow: var(--cyan-glow);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.flag-locked {
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    background: rgba(10, 12, 16, 0.8);
+    padding: 14px 18px;
+    border: 1px dashed var(--border);
+    font-size: 0.88rem;
+    text-align: center;
+    margin-top: 8px;
+}
+
+.flag-input-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.flag-input-row .form-input {
+    flex: 1;
+}
+
+/* ─── Step Indicator ─── */
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 16px 0;
+}
+
+.step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 16px;
+    background: rgba(0, 8, 0, 0.8);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    transition: var(--trans);
+}
+
+.step:hover {
+    border-color: var(--green);
+}
+
+.step-num {
+    min-width: 26px;
+    height: 26px;
+    border-radius: 0;
+    background: transparent;
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 0 6px rgba(0, 255, 0, 0.5);
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+    color: var(--green);
+}
+
+.step-detail {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+/* ─── Hint Box ─── */
+.hint-box {
+    background: rgba(0, 255, 255, 0.04);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-left: 3px solid var(--blue);
+    border-radius: var(--r-sm);
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    color: var(--blue);
+    margin-top: 16px;
+    font-family: var(--font-mono);
+}
+
+.hint-box strong {
+    font-weight: 700;
+    display: block;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+}
+
+.hint-box strong::before {
+    content: '[HINT] ';
+}
+
+/* ─── Solved Banner ─── */
+.solved-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0, 20, 0, 0.9);
+    border: 1px solid var(--green);
+    border-radius: var(--r-sm);
+    padding: 14px 18px;
+    margin-top: 20px;
+    color: var(--green);
+    font-weight: 600;
+    font-size: 0.88rem;
+    font-family: var(--font-mono);
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.15);
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
+    animation: fadeInUp 0.4s ease forwards;
+}
+
+.solved-banner-icon {
+    font-size: 1.2rem;
+}
+
+/* ─── Code Snippet ─── */
+.code-block {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+    margin: 12px 0;
+    box-shadow: 0 0 12px rgba(0, 255, 0, 0.05);
+}
+
+.code-block-header {
+    background: rgba(0, 255, 0, 0.05);
+    border-bottom: 1px solid var(--border);
+    padding: 7px 14px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.code-block-body {
+    padding: 14px 18px;
+    font-family: var(--font-mono);
+    font-size: 0.83rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    overflow-x: auto;
+}
+
+.code-block-body .kw {
+    color: var(--purple);
+}
+
+.code-block-body .str {
+    color: var(--yellow);
+}
+
+.code-block-body .cmt {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.code-block-body .fg {
+    color: var(--green);
+    font-weight: 700;
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
+}
+
+/* ─── Tab Blocks ─── */
+.tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.tab-btn {
+    padding: 7px 16px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: var(--trans);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.tab-btn.active,
+.tab-btn:hover {
+    color: var(--green);
+    border-bottom-color: var(--green);
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* ─── JSON viewer ─── */
+.json-viewer {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 14px 18px;
+    font-family: var(--font-mono);
+    font-size: 0.83rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+}
+
+.json-key {
+    color: var(--blue);
+}
+
+.json-str {
+    color: var(--yellow);
+}
+
+.json-num {
+    color: var(--purple);
+}
+
+.json-flag {
+    color: var(--green);
+    font-weight: 700;
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+}
+
+/* ─── Confetti overlay ─── */
+.confetti-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+}

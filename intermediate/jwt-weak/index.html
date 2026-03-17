@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JWT Weak Secret — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Intermediate</a></li>
+                <li><a href="../../advanced/index.html">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Intermediate</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">JWT Weak Secret</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-intermediate">🟡 Intermediate</span>
+                <span class="badge badge-purple">150 pts</span>
+                <span class="badge badge-info">JWT Forgery</span>
+            </div>
+            <h1 class="challenge-title">🔏 JWT Weak <span>Secret</span></h1>
+            <p class="challenge-subtitle">I-06 &nbsp;·&nbsp; /intermediate/jwt-weak</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's API uses JWTs signed with HS256. The secret key is just <code>secret</code>.
+                You've captured your own token as a regular user. Decode it, change <code>"role":"user"</code>
+                to <code>"role":"admin"</code>, re-sign it with the known weak secret, and present it to gain admin
+                access.
+            </p>
+        </div>
+
+        <div class="tabs mt-24">
+            <button class="tab-btn active" onclick="switchTab('decode')">1. Decode Token</button>
+            <button class="tab-btn" onclick="switchTab('forge')">2. Forge Token</button>
+            <button class="tab-btn" onclick="switchTab('submit')">3. Submit Forged Token</button>
+        </div>
+
+        <!-- Decode tab -->
+        <div class="tab-pane active" id="tab-decode">
+            <div class="vuln-area">
+                <div class="vuln-area-header"><span class="vuln-area-title">Your JWT Token (captured from login)</span>
+                </div>
+                <div class="vuln-area-body">
+                    <div class="code-block mb-16">
+                        <div class="code-block-header">Authorization: Bearer ...</div>
+                        <div class="code-block-body" style="word-break:break-all;font-size:0.75rem;"
+                            id="user-jwt-display"></div>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="decodeJWT()">🔍 Decode JWT →</button>
+                    <div id="decoded-display" style="margin-top:16px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forge tab -->
+        <div class="tab-pane" id="tab-forge">
+            <div class="vuln-area">
+                <div class="vuln-area-header"><span class="vuln-area-title">JWT Payload Editor</span></div>
+                <div class="vuln-area-body">
+                    <div class="form-group mb-12">
+                        <label class="form-label">Edit Payload JSON</label>
+                        <textarea class="form-input" id="forge-payload" rows="4"></textarea>
+                    </div>
+                    <div class="form-group mb-12">
+                        <label class="form-label">Signing Secret</label>
+                        <input type="text" class="form-input" id="forge-secret" placeholder="Try: secret" />
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="forgeToken()">🔨 Sign Forged Token →</button>
+                    <div id="forge-result" style="margin-top:16px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit tab -->
+        <div class="tab-pane" id="tab-submit">
+            <div class="vuln-area">
+                <div class="vuln-area-header"><span class="vuln-area-title">Submit Token to API</span></div>
+                <div class="vuln-area-body">
+                    <div class="form-group mb-12">
+                        <label class="form-label">JWT Token</label>
+                        <textarea class="form-input" id="submit-token" placeholder="Paste your forged JWT here..."
+                            rows="3"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="submitToken()">Submit to /api/admin →</button>
+                    <div id="submit-result" style="margin-top:16px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            The signing secret is <code>secret</code>. Decode your user token, change <code>"role":"user"</code>
+            to <code>"role":"admin"</code>, sign with the same secret, submit the forged token.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Intermediate</a> &nbsp;·&nbsp;
+            <a href="../open-redirect/index.html">Next →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('i06', 'FLAG{jwt_weak_secret_forged}');
+
+        // Minimal HS256 JWT implementation (browser-native, SubtleCrypto)
+        const USER_JWT_HEADER = { alg: 'HS256', typ: 'JWT' };
+        const USER_JWT_PAYLOAD = { sub: 'user42', username: 'alice', role: 'user', iat: 1700000000 };
+        const WEAK_SECRET = 'secret';
+
+        function b64urlEncode(str) {
+            return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+        function b64urlDecode(str) {
+            return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+        }
+
+        async function hmacSHA256(secret, data) {
+            const enc = new TextEncoder();
+            const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+            const sig = await crypto.subtle.sign('HMAC', key, enc.encode(data));
+            return btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+
+        async function buildJWT(header, payload, secret) {
+            const h = b64urlEncode(JSON.stringify(header));
+            const p = b64urlEncode(JSON.stringify(payload));
+            const sig = await hmacSHA256(secret, h + '.' + p);
+            return `${h}.${p}.${sig}`;
+        }
+
+        async function init() {
+            const token = await buildJWT(USER_JWT_HEADER, USER_JWT_PAYLOAD, WEAK_SECRET);
+            const [h, p] = token.split('.');
+            document.getElementById('user-jwt-display').innerHTML =
+                `<span style="color:var(--magenta);">${h}</span>.<span style="color:var(--purple);">${p}</span>.<span style="color:var(--text-muted);">…signature…</span>`;
+            window.__userToken = token;
+            document.getElementById('forge-payload').value = JSON.stringify({ ...USER_JWT_PAYLOAD, role: 'user' }, null, 2);
+            document.getElementById('forge-secret').value = '';
+            document.getElementById('submit-token').value = '';
+        }
+
+        function decodeJWT() {
+            if (!window.__userToken) return;
+            const [h, p] = window.__userToken.split('.');
+            const header = JSON.parse(b64urlDecode(h));
+            const payload = JSON.parse(b64urlDecode(p));
+            document.getElementById('decoded-display').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="card" style="padding:12px;">
+        <div class="section-label" style="margin-bottom:8px;color:var(--magenta);">Header</div>
+        <pre style="font-size:0.75rem;color:var(--text-secondary);">${JSON.stringify(header, null, 2)}</pre>
+      </div>
+      <div class="card" style="padding:12px;">
+        <div class="section-label" style="margin-bottom:8px;color:var(--purple);">Payload</div>
+        <pre style="font-size:0.75rem;color:var(--text-secondary);">${JSON.stringify(payload, null, 2)}</pre>
+      </div>
+    </div>
+    <div class="alert alert-warning mt-12">
+      ⚠️ The <code>role</code> field is <strong>${payload.role}</strong>. Change it to <code>admin</code> in the Forge tab!
+    </div>`;
+        }
+
+        async function forgeToken() {
+            try {
+                const payload = JSON.parse(document.getElementById('forge-payload').value);
+                const secret = document.getElementById('forge-secret').value;
+                const token = await buildJWT(USER_JWT_HEADER, payload, secret);
+                document.getElementById('forge-result').innerHTML = `
+      <div class="code-block"><div class="code-block-header">Forged JWT:</div>
+      <div class="code-block-body" style="word-break:break-all;font-size:0.75rem;">${token}</div></div>
+      <button class="btn btn-ghost btn-sm mt-8" onclick="document.getElementById('submit-token').value='${token}';switchTab('submit');">
+        → Copy to Submit tab
+      </button>`;
+            } catch (e) {
+                document.getElementById('forge-result').innerHTML = `<div class="alert alert-danger">Error: ${e.message}</div>`;
+            }
+        }
+
+        async function submitToken() {
+            const token = document.getElementById('submit-token').value.trim();
+            if (!token) return;
+
+            try {
+                const parts = token.split('.');
+                if (parts.length !== 3) throw new Error('Invalid JWT format');
+                const payload = JSON.parse(b64urlDecode(parts[1]));
+                const [h, p] = parts;
+                const expectedSig = await hmacSHA256(WEAK_SECRET, h + '.' + p);
+
+                if (parts[2] !== expectedSig) {
+                    document.getElementById('submit-result').innerHTML =
+                        '<div class="alert alert-danger">✗ Invalid signature. The server rejected the token.</div>';
+                    return;
+                }
+
+                if (payload.role === 'admin') {
+                    document.getElementById('submit-result').innerHTML = `
+        <div class="alert alert-success mb-12">✓ Signature valid! Role = admin. Access granted.</div>
+        <div class="flag-section">
+          <div class="flag-section-header">🚩 JWT Forgery Confirmed</div>
+          <div class="flag-section-body">
+            <div class="flag-reveal">🚩 FLAG{jwt_weak_secret_forged}</div>
+          </div>
+        </div>`;
+
+                    // Discovery hint
+                    if (!CTF.isSolved('i06')) {
+                        const area = document.getElementById('submission-area');
+                        if (!document.querySelector('.discovery-alert')) {
+                            const hintSq = document.createElement('div');
+                            hintSq.className = 'animate-in discovery-alert';
+                            hintSq.style.marginTop = '20px';
+                            hintSq.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> JWT TOKEN FORGED. Copy the flag and submit below.</div>';
+                            area.insertAdjacentElement('beforebegin', hintSq);
+                        }
+                    }
+                } else {
+                    document.getElementById('submit-result').innerHTML =
+                        `<div class="alert alert-warning">Signature valid, but role is <code>${payload.role}</code>. Need <code>admin</code>.</div>`;
+                }
+            } catch (e) {
+                document.getElementById('submit-result').innerHTML = `<div class="alert alert-danger">Error parsing token: ${e.message}</div>`;
+            }
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

